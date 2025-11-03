@@ -99,8 +99,8 @@ mod def {
             // guarantees that calling `ByteSlice` methods will not change the
             // address or length of `self.0`'s referent.
             //
-            // SAFETY: By invariant on `self.0`, the alignment and size
-            // post-conditions are upheld.
+            /// SAFETY: By invariant on `self.0`, the alignment and size
+            /// post-conditions are upheld.
             &self.0
         }
     }
@@ -122,8 +122,8 @@ mod def {
             // stability guarantees that calling `ByteSlice` methods will not
             // change the address or length of `self.0`'s referent.
             //
-            // SAFETY: By invariant on `self.0`, the alignment and size
-            // post-conditions are upheld.
+            /// SAFETY: By invariant on `self.0`, the alignment and size
+            /// post-conditions are upheld.
             &mut self.0
         }
     }
@@ -145,8 +145,8 @@ mod def {
             // stability guarantees that calling `ByteSlice` methods will not
             // change the address or length of `self.0`'s referent.
             //
-            // SAFETY: By invariant on `self.0`, the alignment and size
-            // post-conditions are upheld.
+            /// SAFETY: By invariant on `self.0`, the alignment and size
+            /// post-conditions are upheld.
             self.0
         }
     }
@@ -168,8 +168,8 @@ mod def {
             // stability guarantees that calling `ByteSlice` methods will not
             // change the address or length of `self.0`'s referent.
             //
-            // SAFETY: By invariant on `self.0`, the alignment and size
-            // post-conditions are upheld.
+            /// SAFETY: By invariant on `self.0`, the alignment and size
+            /// post-conditions are upheld.
             self.0
         }
     }
@@ -206,7 +206,7 @@ where
             return Err(err.with_src(bytes).into());
         }
 
-        // SAFETY: We just validated size and alignment.
+        /// SAFETY: We just validated size and alignment.
         Ok(unsafe { Ref::new_unchecked(bytes) })
     }
 }
@@ -225,11 +225,11 @@ where
         }
         let (bytes, suffix) =
             bytes.split_at(mem::size_of::<T>()).map_err(|b| SizeError::new(b).into())?;
-        // SAFETY: We just validated alignment and that `bytes` is at least as
-        // large as `T`. `bytes.split_at(mem::size_of::<T>())?` ensures that the
-        // new `bytes` is exactly the size of `T`. By safety postcondition on
-        // `SplitByteSlice::split_at` we can rely on `split_at` to produce the
-        // correct `bytes` and `suffix`.
+        /// SAFETY: We just validated alignment and that `bytes` is at least as
+        /// large as `T`. `bytes.split_at(mem::size_of::<T>())?` ensures that the
+        /// new `bytes` is exactly the size of `T`. By safety postcondition on
+        /// `SplitByteSlice::split_at` we can rely on `split_at` to produce the
+        /// correct `bytes` and `suffix`.
         let r = unsafe { Ref::new_unchecked(bytes) };
         Ok((r, suffix))
     }
@@ -246,12 +246,12 @@ where
         if let Err(err) = util::validate_aligned_to::<_, T>(bytes.deref()) {
             return Err(err.with_src(bytes).into());
         }
-        // SAFETY: Since `split_at` is defined as `bytes_len - size_of::<T>()`,
-        // the `bytes` which results from `let (prefix, bytes) =
-        // bytes.split_at(split_at)?` has length `size_of::<T>()`. After
-        // constructing `bytes`, we validate that it has the proper alignment.
-        // By safety postcondition on `SplitByteSlice::split_at` we can rely on
-        // `split_at` to produce the correct `prefix` and `bytes`.
+        /// SAFETY: Since `split_at` is defined as `bytes_len - size_of::<T>()`,
+        /// the `bytes` which results from `let (prefix, bytes) =
+        /// bytes.split_at(split_at)?` has length `size_of::<T>()`. After
+        /// constructing `bytes`, we validate that it has the proper alignment.
+        /// By safety postcondition on `SplitByteSlice::split_at` we can rely on
+        /// `split_at` to produce the correct `prefix` and `bytes`.
         let r = unsafe { Ref::new_unchecked(bytes) };
         Ok((prefix, r))
     }
@@ -304,7 +304,7 @@ where
         {
             return Err(e.with_src(()).with_src(source));
         }
-        // SAFETY: `try_cast_into_no_leftover` validates size and alignment.
+        /// SAFETY: `try_cast_into_no_leftover` validates size and alignment.
         Ok(unsafe { Ref::new_unchecked(source) })
     }
 }
@@ -362,18 +362,18 @@ where
             }
         };
 
-        // SAFETY: `remainder` is constructed as a subset of `source`, and so it
-        // cannot have a larger size than `source`. Both of their `len` methods
-        // measure bytes (`source` deref's to `[u8]`, and `remainder` is a
-        // `Ptr<[u8]>`), so `source.len() >= remainder.len()`. Thus, this cannot
-        // underflow.
+        /// SAFETY: `remainder` is constructed as a subset of `source`, and so it
+        /// cannot have a larger size than `source`. Both of their `len` methods
+        /// measure bytes (`source` deref's to `[u8]`, and `remainder` is a
+        /// `Ptr<[u8]>`), so `source.len() >= remainder.len()`. Thus, this cannot
+        /// underflow.
         #[allow(unstable_name_collisions)]
         let split_at = unsafe { source.len().unchecked_sub(remainder.len()) };
         let (bytes, suffix) = source.split_at(split_at).map_err(|b| SizeError::new(b).into())?;
-        // SAFETY: `try_cast_into` validates size and alignment, and returns a
-        // `split_at` that indicates how many bytes of `source` correspond to a
-        // valid `T`. By safety postcondition on `SplitByteSlice::split_at` we
-        // can rely on `split_at` to produce the correct `source` and `suffix`.
+        /// SAFETY: `try_cast_into` validates size and alignment, and returns a
+        /// `split_at` that indicates how many bytes of `source` correspond to a
+        /// valid `T`. By safety postcondition on `SplitByteSlice::split_at` we
+        /// can rely on `split_at` to produce the correct `source` and `suffix`.
         let r = unsafe { Ref::new_unchecked(bytes) };
         Ok((r, suffix))
     }
@@ -430,10 +430,10 @@ where
 
         let split_at = remainder.len();
         let (prefix, bytes) = source.split_at(split_at).map_err(|b| SizeError::new(b).into())?;
-        // SAFETY: `try_cast_into` validates size and alignment, and returns a
-        // `split_at` that indicates how many bytes of `source` correspond to a
-        // valid `T`. By safety postcondition on `SplitByteSlice::split_at` we
-        // can rely on `split_at` to produce the correct `prefix` and `bytes`.
+        /// SAFETY: `try_cast_into` validates size and alignment, and returns a
+        /// `split_at` that indicates how many bytes of `source` correspond to a
+        /// valid `T`. By safety postcondition on `SplitByteSlice::split_at` we
+        /// can rely on `split_at` to produce the correct `prefix` and `bytes`.
         let r = unsafe { Ref::new_unchecked(bytes) };
         Ok((prefix, r))
     }
@@ -588,8 +588,8 @@ where
         } else {
             return Err(SizeError::new(source).into());
         };
-        // SAFETY: The preceding `source.len().checked_sub(expected_len)`
-        // guarantees that `split_at` is in-bounds.
+        /// SAFETY: The preceding `source.len().checked_sub(expected_len)`
+        /// guarantees that `split_at` is in-bounds.
         let (bytes, suffix) = unsafe { source.split_at_unchecked(split_at) };
         Self::from_bytes(suffix).map(move |l| (bytes, l))
     }
@@ -613,8 +613,8 @@ where
         // Presumably unreachable, since we've guarded each constructor of `Ref`.
         static_assert_dst_is_not_zst!(T);
 
-        // SAFETY: We don't call any methods on `b` other than those provided by
-        // `IntoByteSlice`.
+        /// SAFETY: We don't call any methods on `b` other than those provided by
+        /// `IntoByteSlice`.
         let b = unsafe { r.into_byte_slice() };
 
         // PANICS: By post-condition on `into_byte_slice`, `b`'s size and
@@ -647,8 +647,8 @@ where
         // Presumably unreachable, since we've guarded each constructor of `Ref`.
         static_assert_dst_is_not_zst!(T);
 
-        // SAFETY: We don't call any methods on `b` other than those provided by
-        // `IntoByteSliceMut`.
+        /// SAFETY: We don't call any methods on `b` other than those provided by
+        /// `IntoByteSliceMut`.
         let b = unsafe { r.into_byte_slice_mut() };
 
         // PANICS: By post-condition on `into_byte_slice_mut`, `b`'s size and
@@ -675,8 +675,8 @@ where
     /// no conflict with a method on the inner type.
     #[inline]
     pub fn bytes(r: &Self) -> &[u8] {
-        // SAFETY: We don't call any methods on `b` other than those provided by
-        // `ByteSlice`.
+        /// SAFETY: We don't call any methods on `b` other than those provided by
+        /// `ByteSlice`.
         unsafe { r.as_byte_slice().deref() }
     }
 }
@@ -693,8 +693,8 @@ where
     /// there is no conflict with a method on the inner type.
     #[inline]
     pub fn bytes_mut(r: &mut Self) -> &mut [u8] {
-        // SAFETY: We don't call any methods on `b` other than those provided by
-        // `ByteSliceMut`.
+        /// SAFETY: We don't call any methods on `b` other than those provided by
+        /// `ByteSliceMut`.
         unsafe { r.as_byte_slice_mut().deref_mut() }
     }
 }
@@ -712,14 +712,14 @@ where
     #[must_use = "has no side effects"]
     #[inline]
     pub fn read(r: &Self) -> T {
-        // SAFETY: We don't call any methods on `b` other than those provided by
-        // `ByteSlice`.
+        /// SAFETY: We don't call any methods on `b` other than those provided by
+        /// `ByteSlice`.
         let b = unsafe { r.as_byte_slice() };
 
-        // SAFETY: By postcondition on `as_byte_slice`, we know that `b` is a
-        // valid size and alignment for `T`. By safety invariant on `ByteSlice`,
-        // we know that this is preserved via `.deref()`. Because `T:
-        // FromBytes`, it is sound to interpret these bytes as a `T`.
+        /// SAFETY: By postcondition on `as_byte_slice`, we know that `b` is a
+        /// valid size and alignment for `T`. By safety invariant on `ByteSlice`,
+        /// we know that this is preserved via `.deref()`. Because `T:
+        /// FromBytes`, it is sound to interpret these bytes as a `T`.
         unsafe { ptr::read(b.deref().as_ptr().cast::<T>()) }
     }
 }
@@ -736,15 +736,15 @@ where
     /// is no conflict with a method on the inner type.
     #[inline]
     pub fn write(r: &mut Self, t: T) {
-        // SAFETY: We don't call any methods on `b` other than those provided by
-        // `ByteSliceMut`.
+        /// SAFETY: We don't call any methods on `b` other than those provided by
+        /// `ByteSliceMut`.
         let b = unsafe { r.as_byte_slice_mut() };
 
-        // SAFETY: By postcondition on `as_byte_slice_mut`, we know that `b` is
-        // a valid size and alignment for `T`. By safety invariant on
-        // `ByteSlice`, we know that this is preserved via `.deref()`. Writing
-        // `t` to the buffer will allow all of the bytes of `t` to be accessed
-        // as a `[u8]`, but because `T: IntoBytes`, we know that this is sound.
+        /// SAFETY: By postcondition on `as_byte_slice_mut`, we know that `b` is
+        /// a valid size and alignment for `T`. By safety invariant on
+        /// `ByteSlice`, we know that this is preserved via `.deref()`. Writing
+        /// `t` to the buffer will allow all of the bytes of `t` to be accessed
+        /// as a `[u8]`, but because `T: IntoBytes`, we know that this is sound.
         unsafe { ptr::write(b.deref_mut().as_mut_ptr().cast::<T>(), t) }
     }
 }
@@ -760,8 +760,8 @@ where
         // Presumably unreachable, since we've guarded each constructor of `Ref`.
         static_assert_dst_is_not_zst!(T);
 
-        // SAFETY: We don't call any methods on `b` other than those provided by
-        // `ByteSlice`.
+        /// SAFETY: We don't call any methods on `b` other than those provided by
+        /// `ByteSlice`.
         let b = unsafe { self.as_byte_slice() };
 
         // PANICS: By postcondition on `as_byte_slice`, `b`'s size and alignment
@@ -788,8 +788,8 @@ where
         // Presumably unreachable, since we've guarded each constructor of `Ref`.
         static_assert_dst_is_not_zst!(T);
 
-        // SAFETY: We don't call any methods on `b` other than those provided by
-        // `ByteSliceMut`.
+        /// SAFETY: We don't call any methods on `b` other than those provided by
+        /// `ByteSliceMut`.
         let b = unsafe { self.as_byte_slice_mut() };
 
         // PANICS: By postcondition on `as_byte_slice_mut`, `b`'s size and

@@ -37,9 +37,9 @@ fn ui() {
     let rustflags = env::var("RUSTFLAGS").unwrap();
     let new_rustflags = rustflags.replace("--cfg zerocopy_derive_union_into_bytes", "");
 
-    // SAFETY: None of our code is concurrently accessinv env vars. It's
-    // possible that the test framework has spawned other threads that are
-    // concurrently accessing env vars, but we can't do anything about that.
+    /// SAFETY: None of our code is concurrently accessinv env vars. It's
+    /// possible that the test framework has spawned other threads that are
+    /// concurrently accessing env vars, but we can't do anything about that.
     #[allow(unused_unsafe)] // `set_var` is safe on our MSRV.
     unsafe {
         env::set_var("RUSTFLAGS", new_rustflags)
@@ -52,7 +52,7 @@ fn ui() {
     // thinking about the semantics of these env vars than to debug later when
     // we've forgotten about it.
     //
-    // SAFETY: See previous safety comment.
+    /// SAFETY: See previous safety comment.
     #[allow(unused_unsafe)] // `set_var` is safe on our MSRV.
     unsafe {
         env::set_var("RUSTFLAGS", rustflags)

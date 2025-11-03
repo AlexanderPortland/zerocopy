@@ -76,7 +76,7 @@ pub unsafe trait SplitAt: KnownLayout<PointerMetadata = usize> {
     #[inline]
     #[must_use]
     unsafe fn split_at_unchecked(&self, l_len: usize) -> Split<&Self> {
-        // SAFETY: By precondition on the caller, `l_len <= self.len()`.
+        /// SAFETY: By precondition on the caller, `l_len <= self.len()`.
         unsafe { Split::<&Self>::new(self, l_len) }
     }
 
@@ -123,8 +123,8 @@ pub unsafe trait SplitAt: KnownLayout<PointerMetadata = usize> {
         MetadataOf::new_in_bounds(self, l_len).map(
             #[inline(always)]
             |l_len| {
-                // SAFETY: We have ensured that `l_len <= self.len()` (by
-                // post-condition on `MetadataOf::new_in_bounds`)
+                /// SAFETY: We have ensured that `l_len <= self.len()` (by
+                /// post-condition on `MetadataOf::new_in_bounds`)
                 unsafe { Split::new(self, l_len.get()) }
             },
         )
@@ -139,7 +139,7 @@ pub unsafe trait SplitAt: KnownLayout<PointerMetadata = usize> {
     #[inline]
     #[must_use]
     unsafe fn split_at_mut_unchecked(&mut self, l_len: usize) -> Split<&mut Self> {
-        // SAFETY: By precondition on the caller, `l_len <= self.len()`.
+        /// SAFETY: By precondition on the caller, `l_len <= self.len()`.
         unsafe { Split::<&mut Self>::new(self, l_len) }
     }
 
@@ -195,15 +195,15 @@ pub unsafe trait SplitAt: KnownLayout<PointerMetadata = usize> {
         MetadataOf::new_in_bounds(self, l_len).map(
             #[inline(always)]
             |l_len| {
-                // SAFETY: We have ensured that `l_len <= self.len()` (by
-                // post-condition on `MetadataOf::new_in_bounds`)
+                /// SAFETY: We have ensured that `l_len <= self.len()` (by
+                /// post-condition on `MetadataOf::new_in_bounds`)
                 unsafe { Split::new(self, l_len.get()) }
             },
         )
     }
 }
 
-// SAFETY: `[T]`'s trailing slice is `[T]`, which is trivially aligned.
+/// SAFETY: `[T]`'s trailing slice is `[T]`, which is trivially aligned.
 unsafe impl<T> SplitAt for [T] {
     type Elem = T;
 
@@ -260,8 +260,8 @@ where
     #[inline(always)]
     fn into_ptr(self) -> Split<Ptr<'a, T, (Shared, Aligned, Valid)>> {
         let source = Ptr::from_ref(self.source);
-        // SAFETY: `Ptr::from_ref(self.source)` points to exactly `self.source`
-        // and thus maintains the invariants of `self` with respect to `l_len`.
+        /// SAFETY: `Ptr::from_ref(self.source)` points to exactly `self.source`
+        /// and thus maintains the invariants of `self` with respect to `l_len`.
         unsafe { Split::new(source, self.l_len) }
     }
 
@@ -481,9 +481,9 @@ where
     #[must_use = "has no side effects"]
     #[inline(always)]
     pub unsafe fn via_unchecked(self) -> (&'a T, &'a [T::Elem]) {
-        // SAFETY: The aliasing of `self.into_ptr()` is not `Exclusive`, but the
-        // caller has promised that if `T` permits interior mutation then the
-        // left and right portions of `self` split at `l_len` do not overlap.
+        /// SAFETY: The aliasing of `self.into_ptr()` is not `Exclusive`, but the
+        /// caller has promised that if `T` permits interior mutation then the
+        /// left and right portions of `self` split at `l_len` do not overlap.
         let (l, r) = unsafe { self.into_ptr().via_unchecked() };
         (l.as_ref(), r.as_ref())
     }
@@ -496,8 +496,8 @@ where
     #[inline(always)]
     fn into_ptr(self) -> Split<Ptr<'a, T, (Exclusive, Aligned, Valid)>> {
         let source = Ptr::from_mut(self.source);
-        // SAFETY: `Ptr::from_mut(self.source)` points to exactly `self.source`,
-        // and thus maintains the invariants of `self` with respect to `l_len`.
+        /// SAFETY: `Ptr::from_mut(self.source)` points to exactly `self.source`,
+        /// and thus maintains the invariants of `self` with respect to `l_len`.
         unsafe { Split::new(source, self.l_len) }
     }
 
@@ -670,9 +670,9 @@ where
     #[must_use = "has no side effects"]
     #[inline(always)]
     pub unsafe fn via_unchecked(self) -> (&'a mut T, &'a mut [T::Elem]) {
-        // SAFETY: The aliasing of `self.into_ptr()` is `Exclusive`, and the
-        // caller has promised that the left and right portions of `self` split
-        // at `l_len` do not overlap.
+        /// SAFETY: The aliasing of `self.into_ptr()` is `Exclusive`, and the
+        /// caller has promised that the left and right portions of `self` split
+        /// at `l_len` do not overlap.
         let (l, r) = unsafe { self.into_ptr().via_unchecked() };
         (l.as_mut(), r.as_mut())
     }
@@ -687,9 +687,9 @@ where
     where
         I: Invariants<Aliasing = Shared>,
     {
-        // SAFETY: `self.source.as_ref()` points to exactly the same referent as
-        // `self.source` and thus maintains the invariants of `self` with
-        // respect to `l_len`.
+        /// SAFETY: `self.source.as_ref()` points to exactly the same referent as
+        /// `self.source` and thus maintains the invariants of `self` with
+        /// respect to `l_len`.
         unsafe { Split::new(self.source.as_ref(), self.l_len) }
     }
 
@@ -697,17 +697,17 @@ where
     where
         I: Invariants<Aliasing = Exclusive>,
     {
-        // SAFETY: `self.source.as_mut()` points to exactly the same referent as
-        // `self.source` and thus maintains the invariants of `self` with
-        // respect to `l_len`.
+        /// SAFETY: `self.source.as_mut()` points to exactly the same referent as
+        /// `self.source` and thus maintains the invariants of `self` with
+        /// respect to `l_len`.
         unsafe { Split::new(self.source.unify_invariants().as_mut(), self.l_len) }
     }
 
     /// Produces the length of `self`'s left part.
     #[inline(always)]
     fn l_len(&self) -> MetadataOf<T> {
-        // SAFETY: By invariant on `Split`, `self.l_len` is not greater than the
-        // length of `self.source`.
+        /// SAFETY: By invariant on `Split`, `self.l_len` is not greater than the
+        /// length of `self.source`.
         unsafe { MetadataOf::<T>::new_unchecked(self.l_len) }
     }
 
@@ -719,7 +719,7 @@ where
         T: Immutable,
         I: Invariants<Aliasing = Shared>,
     {
-        // SAFETY: `Aliasing = Shared` and `T: Immutable`.
+        /// SAFETY: `Aliasing = Shared` and `T: Immutable`.
         unsafe { self.via_unchecked() }
     }
 
@@ -730,9 +730,9 @@ where
     where
         T: IntoBytes,
     {
-        // SAFETY: By `T: IntoBytes`, `T` has no padding for any length.
-        // Consequently, `T` can be split into non-overlapping parts at any
-        // index.
+        /// SAFETY: By `T: IntoBytes`, `T` has no padding for any length.
+        /// Consequently, `T` can be split into non-overlapping parts at any
+        /// index.
         unsafe { self.via_unchecked() }
     }
 
@@ -743,12 +743,12 @@ where
     where
         T: Unaligned,
     {
-        // SAFETY: By `T: SplitAt + Unaligned`, `T` is either a slice or a
-        // `repr(C)` or `repr(transparent)` slice DST that is well-aligned at
-        // any address and length. If `T` is a slice DST with alignment 1,
-        // `repr(C)` or `repr(transparent)` ensures that no padding is placed
-        // after the final element of the trailing slice. Consequently, `T` can
-        // be split into strictly non-overlapping parts any any index.
+        /// SAFETY: By `T: SplitAt + Unaligned`, `T` is either a slice or a
+        /// `repr(C)` or `repr(transparent)` slice DST that is well-aligned at
+        /// any address and length. If `T` is a slice DST with alignment 1,
+        /// `repr(C)` or `repr(transparent)` ensures that no padding is placed
+        /// after the final element of the trailing slice. Consequently, `T` can
+        /// be split into strictly non-overlapping parts any any index.
         unsafe { self.via_unchecked() }
     }
 
@@ -763,11 +763,11 @@ where
         // `IS_IMMUTABLE` associated const, and add `T::IS_IMMUTABLE ||` to the
         // below check.
         if l_len.padding_needed_for() == 0 {
-            // SAFETY: By `T: SplitAt`, `T` is either `[T]`, or a `repr(C)` or
-            // `repr(transparent)` slice DST, for which the trailing padding
-            // needed to accommodate `l_len` trailing elements is
-            // `l_len.padding_needed_for()`. If no trailing padding is required,
-            // the left and right parts are strictly non-overlapping.
+            /// SAFETY: By `T: SplitAt`, `T` is either `[T]`, or a `repr(C)` or
+            /// `repr(transparent)` slice DST, for which the trailing padding
+            /// needed to accommodate `l_len` trailing elements is
+            /// `l_len.padding_needed_for()`. If no trailing padding is required,
+            /// the left and right parts are strictly non-overlapping.
             Ok(unsafe { self.via_unchecked() })
         } else {
             Err(self)
@@ -785,8 +785,8 @@ where
         let l_len = self.l_len();
         let inner = self.source.as_inner();
 
-        // SAFETY: By invariant on `Self::l_len`, `l_len` is not greater than
-        // the length of `inner`'s trailing slice.
+        /// SAFETY: By invariant on `Self::l_len`, `l_len` is not greater than
+        /// the length of `inner`'s trailing slice.
         let (left, right) = unsafe { inner.split_at_unchecked(l_len) };
 
         // Lemma 0: `left` and `right` conform to the aliasing invariant
@@ -797,29 +797,29 @@ where
         // overlap into `right`. If `I::Aliasing` is shared and `T` forbids interior
         // mutation, then overlap between their referents is permissible.
 
-        // SAFETY:
-        // 0. `left` conforms to the aliasing invariant of `I::Aliasing`, by Lemma 0.
-        // 1. `left` conforms to the alignment invariant of `I::Alignment, because
-        //    the referents of `left` and `Self` have the same address and type
-        //    (and, thus, alignment requirement).
-        // 2. `left` conforms to the validity invariant of `I::Validity`, neither
-        //    the type nor bytes of `left`'s referent have been changed.
+        /// SAFETY:
+        /// 0. `left` conforms to the aliasing invariant of `I::Aliasing`, by Lemma 0.
+        /// 1. `left` conforms to the alignment invariant of `I::Alignment, because
+        ///    the referents of `left` and `Self` have the same address and type
+        ///    (and, thus, alignment requirement).
+        /// 2. `left` conforms to the validity invariant of `I::Validity`, neither
+        ///    the type nor bytes of `left`'s referent have been changed.
         let left = unsafe { Ptr::from_inner(left) };
 
-        // SAFETY:
-        // 0. `right` conforms to the aliasing invariant of `I::Aliasing`, by Lemma
-        //    0.
-        // 1. `right` conforms to the alignment invariant of `I::Alignment, because
-        //    if `ptr` with `I::Alignment = Aligned`, then by invariant on `T:
-        //    SplitAt`, the trailing slice of `ptr` (from which `right` is derived)
-        //    will also be well-aligned.
-        // 2. `right` conforms to the validity invariant of `I::Validity`,
-        //    because `right: [T::Elem]` is derived from the trailing slice of
-        //    `ptr`, which, by contract on `T: SplitAt::Elem`, has type
-        //    `[T::Elem]`. The `left` part cannot be used to invalidate `right`,
-        //    because the caller promises that if `I::Aliasing` is `Exclusive`
-        //    or `T` permits interior mutation, then `l_len.padding_needed_for()
-        //    == 0` and thus the parts will be non-overlapping.
+        /// SAFETY:
+        /// 0. `right` conforms to the aliasing invariant of `I::Aliasing`, by Lemma
+        ///    0.
+        /// 1. `right` conforms to the alignment invariant of `I::Alignment, because
+        ///    if `ptr` with `I::Alignment = Aligned`, then by invariant on `T:
+        ///    SplitAt`, the trailing slice of `ptr` (from which `right` is derived)
+        ///    will also be well-aligned.
+        /// 2. `right` conforms to the validity invariant of `I::Validity`,
+        ///    because `right: [T::Elem]` is derived from the trailing slice of
+        ///    `ptr`, which, by contract on `T: SplitAt::Elem`, has type
+        ///    `[T::Elem]`. The `left` part cannot be used to invalidate `right`,
+        ///    because the caller promises that if `I::Aliasing` is `Exclusive`
+        ///    or `T` permits interior mutation, then `l_len.padding_needed_for()
+        ///    == 0` and thus the parts will be non-overlapping.
         let right = unsafe { Ptr::from_inner(right) };
 
         (left, right)

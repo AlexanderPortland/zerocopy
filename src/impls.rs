@@ -15,50 +15,50 @@ use core::{
 
 use super::*;
 
-// SAFETY: Per the reference [1], "the unit tuple (`()`) ... is guaranteed as a
-// zero-sized type to have a size of 0 and an alignment of 1."
-// - `Immutable`: `()` self-evidently does not contain any `UnsafeCell`s.
-// - `TryFromBytes` (with no validator), `FromZeros`, `FromBytes`: There is only
-//   one possible sequence of 0 bytes, and `()` is inhabited.
-// - `IntoBytes`: Since `()` has size 0, it contains no padding bytes.
-// - `Unaligned`: `()` has alignment 1.
-//
-// [1] https://doc.rust-lang.org/1.81.0/reference/type-layout.html#tuple-layout
+/// SAFETY: Per the reference [1], "the unit tuple (`()`) ... is guaranteed as a
+/// zero-sized type to have a size of 0 and an alignment of 1."
+/// - `Immutable`: `()` self-evidently does not contain any `UnsafeCell`s.
+/// - `TryFromBytes` (with no validator), `FromZeros`, `FromBytes`: There is only
+///   one possible sequence of 0 bytes, and `()` is inhabited.
+/// - `IntoBytes`: Since `()` has size 0, it contains no padding bytes.
+/// - `Unaligned`: `()` has alignment 1.
+///
+/// [1] https://doc.rust-lang.org/1.81.0/reference/type-layout.html#tuple-layout
 const _: () = unsafe {
     unsafe_impl!((): Immutable, TryFromBytes, FromZeros, FromBytes, IntoBytes, Unaligned);
     assert_unaligned!(());
 };
 
-// SAFETY:
-// - `Immutable`: These types self-evidently do not contain any `UnsafeCell`s.
-// - `TryFromBytes` (with no validator), `FromZeros`, `FromBytes`: all bit
-//   patterns are valid for numeric types [1]
-// - `IntoBytes`: numeric types have no padding bytes [1]
-// - `Unaligned` (`u8` and `i8` only): The reference [2] specifies the size of
-//   `u8` and `i8` as 1 byte. We also know that:
-//   - Alignment is >= 1 [3]
-//   - Size is an integer multiple of alignment [4]
-//   - The only value >= 1 for which 1 is an integer multiple is 1 Therefore,
-//   the only possible alignment for `u8` and `i8` is 1.
-//
-// [1] Per https://doc.rust-lang.org/1.81.0/reference/types/numeric.html#bit-validity:
-//
-//     For every numeric type, `T`, the bit validity of `T` is equivalent to
-//     the bit validity of `[u8; size_of::<T>()]`. An uninitialized byte is
-//     not a valid `u8`.
-//
-// [2] https://doc.rust-lang.org/1.81.0/reference/type-layout.html#primitive-data-layout
-//
-// [3] Per https://doc.rust-lang.org/1.81.0/reference/type-layout.html#size-and-alignment:
-//
-//     Alignment is measured in bytes, and must be at least 1.
-//
-// [4] Per https://doc.rust-lang.org/1.81.0/reference/type-layout.html#size-and-alignment:
-//
-//     The size of a value is always a multiple of its alignment.
-//
-// FIXME(#278): Once we've updated the trait docs to refer to `u8`s rather than
-// bits or bytes, update this comment, especially the reference to [1].
+/// SAFETY:
+/// - `Immutable`: These types self-evidently do not contain any `UnsafeCell`s.
+/// - `TryFromBytes` (with no validator), `FromZeros`, `FromBytes`: all bit
+///   patterns are valid for numeric types [1]
+/// - `IntoBytes`: numeric types have no padding bytes [1]
+/// - `Unaligned` (`u8` and `i8` only): The reference [2] specifies the size of
+///   `u8` and `i8` as 1 byte. We also know that:
+///   - Alignment is >= 1 [3]
+///   - Size is an integer multiple of alignment [4]
+///   - The only value >= 1 for which 1 is an integer multiple is 1 Therefore,
+///   the only possible alignment for `u8` and `i8` is 1.
+///
+/// [1] Per https://doc.rust-lang.org/1.81.0/reference/types/numeric.html#bit-validity:
+///
+///     For every numeric type, `T`, the bit validity of `T` is equivalent to
+///     the bit validity of `[u8; size_of::<T>()]`. An uninitialized byte is
+///     not a valid `u8`.
+///
+/// [2] https://doc.rust-lang.org/1.81.0/reference/type-layout.html#primitive-data-layout
+///
+/// [3] Per https://doc.rust-lang.org/1.81.0/reference/type-layout.html#size-and-alignment:
+///
+///     Alignment is measured in bytes, and must be at least 1.
+///
+/// [4] Per https://doc.rust-lang.org/1.81.0/reference/type-layout.html#size-and-alignment:
+///
+///     The size of a value is always a multiple of its alignment.
+///
+/// FIXME(#278): Once we've updated the trait docs to refer to `u8`s rather than
+/// bits or bytes, update this comment, especially the reference to [1].
 const _: () = unsafe {
     unsafe_impl!(u8: Immutable, TryFromBytes, FromZeros, FromBytes, IntoBytes, Unaligned);
     unsafe_impl!(i8: Immutable, TryFromBytes, FromZeros, FromBytes, IntoBytes, Unaligned);
@@ -81,28 +81,28 @@ const _: () = unsafe {
     unsafe_impl!(#[cfg_attr(doc_cfg, doc(cfg(feature = "float-nightly")))] f128: Immutable, TryFromBytes, FromZeros, FromBytes, IntoBytes);
 };
 
-// SAFETY:
-// - `Immutable`: `bool` self-evidently does not contain any `UnsafeCell`s.
-// - `FromZeros`: Valid since "[t]he value false has the bit pattern 0x00" [1].
-// - `IntoBytes`: Since "the boolean type has a size and alignment of 1 each"
-//   and "The value false has the bit pattern 0x00 and the value true has the
-//   bit pattern 0x01" [1]. Thus, the only byte of the bool is always
-//   initialized.
-// - `Unaligned`: Per the reference [1], "[a]n object with the boolean type has
-//   a size and alignment of 1 each."
-//
-// [1] https://doc.rust-lang.org/1.81.0/reference/types/boolean.html
+/// SAFETY:
+/// - `Immutable`: `bool` self-evidently does not contain any `UnsafeCell`s.
+/// - `FromZeros`: Valid since "[t]he value false has the bit pattern 0x00" [1].
+/// - `IntoBytes`: Since "the boolean type has a size and alignment of 1 each"
+///   and "The value false has the bit pattern 0x00 and the value true has the
+///   bit pattern 0x01" [1]. Thus, the only byte of the bool is always
+///   initialized.
+/// - `Unaligned`: Per the reference [1], "[a]n object with the boolean type has
+///   a size and alignment of 1 each."
+///
+/// [1] https://doc.rust-lang.org/1.81.0/reference/types/boolean.html
 const _: () = unsafe { unsafe_impl!(bool: Immutable, FromZeros, IntoBytes, Unaligned) };
 assert_unaligned!(bool);
 
-// SAFETY: The impl must only return `true` for its argument if the original
-// `Maybe<bool>` refers to a valid `bool`. We only return true if the `u8` value
-// is 0 or 1, and both of these are valid values for `bool` [1].
-//
-// [1] Per https://doc.rust-lang.org/1.81.0/reference/types/boolean.html:
-//
-//   The value false has the bit pattern 0x00 and the value true has the bit
-//   pattern 0x01.
+/// SAFETY: The impl must only return `true` for its argument if the original
+/// `Maybe<bool>` refers to a valid `bool`. We only return true if the `u8` value
+/// is 0 or 1, and both of these are valid values for `bool` [1].
+///
+/// [1] Per https://doc.rust-lang.org/1.81.0/reference/types/boolean.html:
+///
+///   The value false has the bit pattern 0x00 and the value true has the bit
+///   pattern 0x01.
 const _: () = unsafe {
     unsafe_impl!(=> TryFromBytes for bool; |byte| {
         let byte = byte.transmute::<u8, invariant::Valid, _>();
@@ -111,27 +111,27 @@ const _: () = unsafe {
 };
 impl_size_eq!(bool, u8);
 
-// SAFETY:
-// - `Immutable`: `char` self-evidently does not contain any `UnsafeCell`s.
-// - `FromZeros`: Per reference [1], "[a] value of type char is a Unicode scalar
-//   value (i.e. a code point that is not a surrogate), represented as a 32-bit
-//   unsigned word in the 0x0000 to 0xD7FF or 0xE000 to 0x10FFFF range" which
-//   contains 0x0000.
-// - `IntoBytes`: `char` is per reference [1] "represented as a 32-bit unsigned
-//   word" (`u32`) which is `IntoBytes`. Note that unlike `u32`, not all bit
-//   patterns are valid for `char`.
-//
-// [1] https://doc.rust-lang.org/1.81.0/reference/types/textual.html
+/// SAFETY:
+/// - `Immutable`: `char` self-evidently does not contain any `UnsafeCell`s.
+/// - `FromZeros`: Per reference [1], "[a] value of type char is a Unicode scalar
+///   value (i.e. a code point that is not a surrogate), represented as a 32-bit
+///   unsigned word in the 0x0000 to 0xD7FF or 0xE000 to 0x10FFFF range" which
+///   contains 0x0000.
+/// - `IntoBytes`: `char` is per reference [1] "represented as a 32-bit unsigned
+///   word" (`u32`) which is `IntoBytes`. Note that unlike `u32`, not all bit
+///   patterns are valid for `char`.
+///
+/// [1] https://doc.rust-lang.org/1.81.0/reference/types/textual.html
 const _: () = unsafe { unsafe_impl!(char: Immutable, FromZeros, IntoBytes) };
 
-// SAFETY: The impl must only return `true` for its argument if the original
-// `Maybe<char>` refers to a valid `char`. `char::from_u32` guarantees that it
-// returns `None` if its input is not a valid `char` [1].
-//
-// [1] Per https://doc.rust-lang.org/core/primitive.char.html#method.from_u32:
-//
-//   `from_u32()` will return `None` if the input is not a valid value for a
-//   `char`.
+/// SAFETY: The impl must only return `true` for its argument if the original
+/// `Maybe<char>` refers to a valid `char`. `char::from_u32` guarantees that it
+/// returns `None` if its input is not a valid `char` [1].
+///
+/// [1] Per https://doc.rust-lang.org/core/primitive.char.html#method.from_u32:
+///
+///   `from_u32()` will return `None` if the input is not a valid value for a
+///   `char`.
 const _: () = unsafe {
     unsafe_impl!(=> TryFromBytes for char; |c| {
         let c = c.transmute::<Unalign<u32>, invariant::Valid, _>();
@@ -142,29 +142,29 @@ const _: () = unsafe {
 
 impl_size_eq!(char, Unalign<u32>);
 
-// SAFETY: Per the Reference [1], `str` has the same layout as `[u8]`.
-// - `Immutable`: `[u8]` does not contain any `UnsafeCell`s.
-// - `FromZeros`, `IntoBytes`, `Unaligned`: `[u8]` is `FromZeros`, `IntoBytes`,
-//   and `Unaligned`.
-//
-// Note that we don't `assert_unaligned!(str)` because `assert_unaligned!` uses
-// `align_of`, which only works for `Sized` types.
-//
-// FIXME(#429):
-// - Add quotes from documentation.
-// - Improve safety proof for `FromZeros` and `IntoBytes`; having the same
-//   layout as `[u8]` isn't sufficient.
-//
-// [1] https://doc.rust-lang.org/1.81.0/reference/type-layout.html#str-layout
+/// SAFETY: Per the Reference [1], `str` has the same layout as `[u8]`.
+/// - `Immutable`: `[u8]` does not contain any `UnsafeCell`s.
+/// - `FromZeros`, `IntoBytes`, `Unaligned`: `[u8]` is `FromZeros`, `IntoBytes`,
+///   and `Unaligned`.
+///
+/// Note that we don't `assert_unaligned!(str)` because `assert_unaligned!` uses
+/// `align_of`, which only works for `Sized` types.
+///
+/// FIXME(#429):
+/// - Add quotes from documentation.
+/// - Improve safety proof for `FromZeros` and `IntoBytes`; having the same
+///   layout as `[u8]` isn't sufficient.
+///
+/// [1] https://doc.rust-lang.org/1.81.0/reference/type-layout.html#str-layout
 const _: () = unsafe { unsafe_impl!(str: Immutable, FromZeros, IntoBytes, Unaligned) };
 
-// SAFETY: The impl must only return `true` for its argument if the original
-// `Maybe<str>` refers to a valid `str`. `str::from_utf8` guarantees that it
-// returns `Err` if its input is not a valid `str` [1].
-//
-// [2] Per https://doc.rust-lang.org/core/str/fn.from_utf8.html#errors:
-//
-//   Returns `Err` if the slice is not UTF-8.
+/// SAFETY: The impl must only return `true` for its argument if the original
+/// `Maybe<str>` refers to a valid `str`. `str::from_utf8` guarantees that it
+/// returns `Err` if its input is not a valid `str` [1].
+///
+/// [2] Per https://doc.rust-lang.org/core/str/fn.from_utf8.html#errors:
+///
+///   Returns `Err` if the slice is not UTF-8.
 const _: () = unsafe {
     unsafe_impl!(=> TryFromBytes for str; |c| {
         let c = c.transmute::<[u8], invariant::Valid, _>();
@@ -190,36 +190,36 @@ macro_rules! unsafe_impl_try_from_bytes_for_nonzero {
 
 // `NonZeroXxx` is `IntoBytes`, but not `FromZeros` or `FromBytes`.
 //
-// SAFETY:
-// - `IntoBytes`: `NonZeroXxx` has the same layout as its associated primitive.
-//    Since it is the same size, this guarantees it has no padding - integers
-//    have no padding, and there's no room for padding if it can represent all
-//    of the same values except 0.
-// - `Unaligned`: `NonZeroU8` and `NonZeroI8` document that `Option<NonZeroU8>`
-//   and `Option<NonZeroI8>` both have size 1. [1] [2] This is worded in a way
-//   that makes it unclear whether it's meant as a guarantee, but given the
-//   purpose of those types, it's virtually unthinkable that that would ever
-//   change. `Option` cannot be smaller than its contained type, which implies
-//   that, and `NonZeroX8` are of size 1 or 0. `NonZeroX8` can represent
-//   multiple states, so they cannot be 0 bytes, which means that they must be 1
-//   byte. The only valid alignment for a 1-byte type is 1.
-//
-// FIXME(#429):
-// - Add quotes from documentation.
-// - Add safety comment for `Immutable`. How can we prove that `NonZeroXxx`
-//   doesn't contain any `UnsafeCell`s? It's obviously true, but it's not clear
-//   how we'd prove it short of adding text to the stdlib docs that says so
-//   explicitly, which likely wouldn't be accepted.
-//
-// [1] https://doc.rust-lang.org/1.81.0/std/num/type.NonZeroU8.html
-//
-//     `NonZeroU8` is guaranteed to have the same layout and bit validity as `u8` with
-//     the exception that 0 is not a valid instance
-//
-// [2] https://doc.rust-lang.org/1.81.0/std/num/type.NonZeroI8.html
-//
-// FIXME(https://github.com/rust-lang/rust/pull/104082): Cite documentation that
-// layout is the same as primitive layout.
+/// SAFETY:
+/// - `IntoBytes`: `NonZeroXxx` has the same layout as its associated primitive.
+///    Since it is the same size, this guarantees it has no padding - integers
+///    have no padding, and there's no room for padding if it can represent all
+///    of the same values except 0.
+/// - `Unaligned`: `NonZeroU8` and `NonZeroI8` document that `Option<NonZeroU8>`
+///   and `Option<NonZeroI8>` both have size 1. [1] [2] This is worded in a way
+///   that makes it unclear whether it's meant as a guarantee, but given the
+///   purpose of those types, it's virtually unthinkable that that would ever
+///   change. `Option` cannot be smaller than its contained type, which implies
+///   that, and `NonZeroX8` are of size 1 or 0. `NonZeroX8` can represent
+///   multiple states, so they cannot be 0 bytes, which means that they must be 1
+///   byte. The only valid alignment for a 1-byte type is 1.
+///
+/// FIXME(#429):
+/// - Add quotes from documentation.
+/// - Add safety comment for `Immutable`. How can we prove that `NonZeroXxx`
+///   doesn't contain any `UnsafeCell`s? It's obviously true, but it's not clear
+///   how we'd prove it short of adding text to the stdlib docs that says so
+///   explicitly, which likely wouldn't be accepted.
+///
+/// [1] https://doc.rust-lang.org/1.81.0/std/num/type.NonZeroU8.html
+///
+///     `NonZeroU8` is guaranteed to have the same layout and bit validity as `u8` with
+///     the exception that 0 is not a valid instance
+///
+/// [2] https://doc.rust-lang.org/1.81.0/std/num/type.NonZeroI8.html
+///
+/// FIXME(https://github.com/rust-lang/rust/pull/104082): Cite documentation that
+/// layout is the same as primitive layout.
 const _: () = unsafe {
     unsafe_impl!(NonZeroU8: Immutable, IntoBytes, Unaligned);
     unsafe_impl!(NonZeroI8: Immutable, IntoBytes, Unaligned);
@@ -250,24 +250,24 @@ const _: () = unsafe {
     );
 };
 
-// SAFETY:
-// - `TryFromBytes` (with no validator), `FromZeros`, `FromBytes`, `IntoBytes`:
-//   The Rust compiler reuses `0` value to represent `None`, so
-//   `size_of::<Option<NonZeroXxx>>() == size_of::<xxx>()`; see `NonZeroXxx`
-//   documentation.
-// - `Unaligned`: `NonZeroU8` and `NonZeroI8` document that `Option<NonZeroU8>`
-//   and `Option<NonZeroI8>` both have size 1. [1] [2] This is worded in a way
-//   that makes it unclear whether it's meant as a guarantee, but given the
-//   purpose of those types, it's virtually unthinkable that that would ever
-//   change. The only valid alignment for a 1-byte type is 1.
-//
-// FIXME(#429): Add quotes from documentation.
-//
-// [1] https://doc.rust-lang.org/stable/std/num/struct.NonZeroU8.html
-// [2] https://doc.rust-lang.org/stable/std/num/struct.NonZeroI8.html
-//
-// FIXME(https://github.com/rust-lang/rust/pull/104082): Cite documentation for
-// layout guarantees.
+/// SAFETY:
+/// - `TryFromBytes` (with no validator), `FromZeros`, `FromBytes`, `IntoBytes`:
+///   The Rust compiler reuses `0` value to represent `None`, so
+///   `size_of::<Option<NonZeroXxx>>() == size_of::<xxx>()`; see `NonZeroXxx`
+///   documentation.
+/// - `Unaligned`: `NonZeroU8` and `NonZeroI8` document that `Option<NonZeroU8>`
+///   and `Option<NonZeroI8>` both have size 1. [1] [2] This is worded in a way
+///   that makes it unclear whether it's meant as a guarantee, but given the
+///   purpose of those types, it's virtually unthinkable that that would ever
+///   change. The only valid alignment for a 1-byte type is 1.
+///
+/// FIXME(#429): Add quotes from documentation.
+///
+/// [1] https://doc.rust-lang.org/stable/std/num/struct.NonZeroU8.html
+/// [2] https://doc.rust-lang.org/stable/std/num/struct.NonZeroI8.html
+///
+/// FIXME(https://github.com/rust-lang/rust/pull/104082): Cite documentation for
+/// layout guarantees.
 const _: () = unsafe {
     unsafe_impl!(Option<NonZeroU8>: TryFromBytes, FromZeros, FromBytes, IntoBytes, Unaligned);
     unsafe_impl!(Option<NonZeroI8>: TryFromBytes, FromZeros, FromBytes, IntoBytes, Unaligned);
@@ -284,11 +284,11 @@ const _: () = unsafe {
     unsafe_impl!(Option<NonZeroIsize>: TryFromBytes, FromZeros, FromBytes, IntoBytes);
 };
 
-// SAFETY: While it's not fully documented, the consensus is that `Box<T>` does
-// not contain any `UnsafeCell`s for `T: Sized` [1]. This is not a complete
-// proof, but we are accepting this as a known risk per #1358.
-//
-// [1] https://github.com/rust-lang/unsafe-code-guidelines/issues/492
+/// SAFETY: While it's not fully documented, the consensus is that `Box<T>` does
+/// not contain any `UnsafeCell`s for `T: Sized` [1]. This is not a complete
+/// proof, but we are accepting this as a known risk per #1358.
+///
+/// [1] https://github.com/rust-lang/unsafe-code-guidelines/issues/492
 #[cfg(feature = "alloc")]
 const _: () = unsafe {
     unsafe_impl!(
@@ -297,27 +297,27 @@ const _: () = unsafe {
     )
 };
 
-// SAFETY: The following types can be transmuted from `[0u8; size_of::<T>()]`. [1]
-//
-// [1] Per https://doc.rust-lang.org/1.89.0/core/option/index.html#representation:
-//
-//   Rust guarantees to optimize the following types `T` such that [`Option<T>`]
-//   has the same size and alignment as `T`. In some of these cases, Rust
-//   further guarantees that `transmute::<_, Option<T>>([0u8; size_of::<T>()])`
-//   is sound and produces `Option::<T>::None`. These cases are identified by
-//   the second column:
-//
-//   | `T`                               | `transmute::<_, Option<T>>([0u8; size_of::<T>()])` sound? |
-//   |-----------------------------------|-----------------------------------------------------------|
-//   | [`Box<U>`]                        | when `U: Sized`                                           |
-//   | `&U`                              | when `U: Sized`                                           |
-//   | `&mut U`                          | when `U: Sized`                                           |
-//   | [`ptr::NonNull<U>`]               | when `U: Sized`                                           |
-//   | `fn`, `extern "C" fn`[^extern_fn] | always                                                    |
-//
-//   [^extern_fn]: this remains true for `unsafe` variants, any argument/return
-//     types, and any other ABI: `[unsafe] extern "abi" fn` (_e.g._, `extern
-//     "system" fn`)
+/// SAFETY: The following types can be transmuted from `[0u8; size_of::<T>()]`. [1]
+///
+/// [1] Per https://doc.rust-lang.org/1.89.0/core/option/index.html#representation:
+///
+///   Rust guarantees to optimize the following types `T` such that [`Option<T>`]
+///   has the same size and alignment as `T`. In some of these cases, Rust
+///   further guarantees that `transmute::<_, Option<T>>([0u8; size_of::<T>()])`
+///   is sound and produces `Option::<T>::None`. These cases are identified by
+///   the second column:
+///
+///   | `T`                               | `transmute::<_, Option<T>>([0u8; size_of::<T>()])` sound? |
+///   |-----------------------------------|-----------------------------------------------------------|
+///   | [`Box<U>`]                        | when `U: Sized`                                           |
+///   | `&U`                              | when `U: Sized`                                           |
+///   | `&mut U`                          | when `U: Sized`                                           |
+///   | [`ptr::NonNull<U>`]               | when `U: Sized`                                           |
+///   | `fn`, `extern "C" fn`[^extern_fn] | always                                                    |
+///
+///   [^extern_fn]: this remains true for `unsafe` variants, any argument/return
+///     types, and any other ABI: `[unsafe] extern "abi" fn` (_e.g._, `extern
+///     "system" fn`)
 const _: () = unsafe {
     #[cfg(feature = "alloc")]
     unsafe_impl!(
@@ -363,9 +363,9 @@ const _: () = unsafe {
     );
 };
 
-// SAFETY: `[unsafe] [extern "C"] fn()` self-evidently do not contain
-// `UnsafeCell`s. This is not a proof, but we are accepting this as a known risk
-// per #1358.
+/// SAFETY: `[unsafe] [extern "C"] fn()` self-evidently do not contain
+/// `UnsafeCell`s. This is not a proof, but we are accepting this as a known risk
+/// per #1358.
 const _: () = unsafe {
     unsafe_impl_for_power_set!(A, B, C, D, E, F, G, H, I, J, K, L -> M => Immutable for opt_fn!(...));
     unsafe_impl_for_power_set!(A, B, C, D, E, F, G, H, I, J, K, L -> M => Immutable for opt_unsafe_fn!(...));
@@ -413,67 +413,67 @@ mod atomics {
             use crate::pointer::{PtrInner, SizeEq, TransmuteFrom, invariant::Valid};
 
             $(
-                // SAFETY: The caller promised that `$atomic` and `$prim` have
-                // the same size and bit validity.
+                /// SAFETY: The caller promised that `$atomic` and `$prim` have
+                /// the same size and bit validity.
                 unsafe impl<$($tyvar)?> TransmuteFrom<$atomic, Valid, Valid> for $prim {}
-                // SAFETY: The caller promised that `$atomic` and `$prim` have
-                // the same size and bit validity.
+                /// SAFETY: The caller promised that `$atomic` and `$prim` have
+                /// the same size and bit validity.
                 unsafe impl<$($tyvar)?> TransmuteFrom<$prim, Valid, Valid> for $atomic {}
 
-                // SAFETY: The caller promised that `$atomic` and `$prim` have
-                // the same size.
+                /// SAFETY: The caller promised that `$atomic` and `$prim` have
+                /// the same size.
                 unsafe impl<$($tyvar)?> SizeEq<$atomic> for $prim {
                     #[inline]
                     fn cast_from_raw(a: PtrInner<'_, $atomic>) -> PtrInner<'_, $prim> {
-                        // SAFETY: The caller promised that `$atomic` and
-                        // `$prim` have the same size. Thus, this cast preserves
-                        // address, referent size, and provenance.
+                        /// SAFETY: The caller promised that `$atomic` and
+                        /// `$prim` have the same size. Thus, this cast preserves
+                        /// address, referent size, and provenance.
                         unsafe { cast!(a) }
                     }
                 }
-                // SAFETY: See previous safety comment.
+                /// SAFETY: See previous safety comment.
                 unsafe impl<$($tyvar)?> SizeEq<$prim> for $atomic {
                     #[inline]
                     fn cast_from_raw(p: PtrInner<'_, $prim>) -> PtrInner<'_, $atomic> {
-                        // SAFETY: See previous safety comment.
+                        /// SAFETY: See previous safety comment.
                         unsafe { cast!(p) }
                     }
                 }
-                // SAFETY: The caller promised that `$atomic` and `$prim` have
-                // the same size. `UnsafeCell<T>` has the same size as `T` [1].
-                //
-                // [1] Per https://doc.rust-lang.org/1.85.0/std/cell/struct.UnsafeCell.html#memory-layout:
-                //
-                //   `UnsafeCell<T>` has the same in-memory representation as
-                //   its inner type `T`. A consequence of this guarantee is that
-                //   it is possible to convert between `T` and `UnsafeCell<T>`.
+                /// SAFETY: The caller promised that `$atomic` and `$prim` have
+                /// the same size. `UnsafeCell<T>` has the same size as `T` [1].
+                ///
+                /// [1] Per https://doc.rust-lang.org/1.85.0/std/cell/struct.UnsafeCell.html#memory-layout:
+                ///
+                ///   `UnsafeCell<T>` has the same in-memory representation as
+                ///   its inner type `T`. A consequence of this guarantee is that
+                ///   it is possible to convert between `T` and `UnsafeCell<T>`.
                 unsafe impl<$($tyvar)?> SizeEq<$atomic> for UnsafeCell<$prim> {
                     #[inline]
                     fn cast_from_raw(a: PtrInner<'_, $atomic>) -> PtrInner<'_, UnsafeCell<$prim>> {
-                        // SAFETY: See previous safety comment.
+                        /// SAFETY: See previous safety comment.
                         unsafe { cast!(a) }
                     }
                 }
-                // SAFETY: See previous safety comment.
+                /// SAFETY: See previous safety comment.
                 unsafe impl<$($tyvar)?> SizeEq<UnsafeCell<$prim>> for $atomic {
                     #[inline]
                     fn cast_from_raw(p: PtrInner<'_, UnsafeCell<$prim>>) -> PtrInner<'_, $atomic> {
-                        // SAFETY: See previous safety comment.
+                        /// SAFETY: See previous safety comment.
                         unsafe { cast!(p) }
                     }
                 }
 
-                // SAFETY: The caller promised that `$atomic` and `$prim` have
-                // the same bit validity. `UnsafeCell<T>` has the same bit
-                // validity as `T` [1].
-                //
-                // [1] Per https://doc.rust-lang.org/1.85.0/std/cell/struct.UnsafeCell.html#memory-layout:
-                //
-                //   `UnsafeCell<T>` has the same in-memory representation as
-                //   its inner type `T`. A consequence of this guarantee is that
-                //   it is possible to convert between `T` and `UnsafeCell<T>`.
+                /// SAFETY: The caller promised that `$atomic` and `$prim` have
+                /// the same bit validity. `UnsafeCell<T>` has the same bit
+                /// validity as `T` [1].
+                ///
+                /// [1] Per https://doc.rust-lang.org/1.85.0/std/cell/struct.UnsafeCell.html#memory-layout:
+                ///
+                ///   `UnsafeCell<T>` has the same in-memory representation as
+                ///   its inner type `T`. A consequence of this guarantee is that
+                ///   it is possible to convert between `T` and `UnsafeCell<T>`.
                 unsafe impl<$($tyvar)?> TransmuteFrom<$atomic, Valid, Valid> for core::cell::UnsafeCell<$prim> {}
-                // SAFETY: See previous safety comment.
+                /// SAFETY: See previous safety comment.
                 unsafe impl<$($tyvar)?> TransmuteFrom<core::cell::UnsafeCell<$prim>, Valid, Valid> for $atomic {}
             )*
         }};
@@ -494,24 +494,24 @@ mod atomics {
         impl_for_transmute_from!(=> FromZeros for AtomicBool [UnsafeCell<bool>]);
         impl_for_transmute_from!(=> IntoBytes for AtomicBool [UnsafeCell<bool>]);
 
-        // SAFETY: Per [1], `AtomicBool`, `AtomicU8`, and `AtomicI8` have the
-        // same size as `bool`, `u8`, and `i8` respectively. Since a type's
-        // alignment cannot be smaller than 1 [2], and since its alignment
-        // cannot be greater than its size [3], the only possible value for the
-        // alignment is 1. Thus, it is sound to implement `Unaligned`.
-        //
-        // [1] Per (for example) https://doc.rust-lang.org/1.81.0/std/sync/atomic/struct.AtomicU8.html:
-        //
-        //   This type has the same size, alignment, and bit validity as the
-        //   underlying integer type
-        //
-        // [2] Per https://doc.rust-lang.org/1.81.0/reference/type-layout.html#size-and-alignment:
-        //
-        //     Alignment is measured in bytes, and must be at least 1.
-        //
-        // [3] Per https://doc.rust-lang.org/1.81.0/reference/type-layout.html#size-and-alignment:
-        //
-        //     The size of a value is always a multiple of its alignment.
+        /// SAFETY: Per [1], `AtomicBool`, `AtomicU8`, and `AtomicI8` have the
+        /// same size as `bool`, `u8`, and `i8` respectively. Since a type's
+        /// alignment cannot be smaller than 1 [2], and since its alignment
+        /// cannot be greater than its size [3], the only possible value for the
+        /// alignment is 1. Thus, it is sound to implement `Unaligned`.
+        ///
+        /// [1] Per (for example) https://doc.rust-lang.org/1.81.0/std/sync/atomic/struct.AtomicU8.html:
+        ///
+        ///   This type has the same size, alignment, and bit validity as the
+        ///   underlying integer type
+        ///
+        /// [2] Per https://doc.rust-lang.org/1.81.0/reference/type-layout.html#size-and-alignment:
+        ///
+        ///     Alignment is measured in bytes, and must be at least 1.
+        ///
+        /// [3] Per https://doc.rust-lang.org/1.81.0/reference/type-layout.html#size-and-alignment:
+        ///
+        ///     The size of a value is always a multiple of its alignment.
         const _: () = unsafe {
             unsafe_impl!(AtomicBool: Unaligned);
             unsafe_impl!(AtomicU8: Unaligned);
@@ -519,22 +519,22 @@ mod atomics {
             assert_unaligned!(AtomicBool, AtomicU8, AtomicI8);
         };
 
-        // SAFETY: `AtomicU8`, `AtomicI8`, and `AtomicBool` have the same size
-        // and bit validity as `u8`, `i8`, and `bool` respectively [1][2][3].
-        //
-        // [1] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicU8.html:
-        //
-        //   This type has the same size, alignment, and bit validity as the
-        //   underlying integer type, `u8`.
-        //
-        // [2] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicI8.html:
-        //
-        //   This type has the same size, alignment, and bit validity as the
-        //   underlying integer type, `i8`.
-        //
-        // [3] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicBool.html:
-        //
-        //   This type has the same size, alignment, and bit validity a `bool`.
+        /// SAFETY: `AtomicU8`, `AtomicI8`, and `AtomicBool` have the same size
+        /// and bit validity as `u8`, `i8`, and `bool` respectively [1][2][3].
+        ///
+        /// [1] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicU8.html:
+        ///
+        ///   This type has the same size, alignment, and bit validity as the
+        ///   underlying integer type, `u8`.
+        ///
+        /// [2] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicI8.html:
+        ///
+        ///   This type has the same size, alignment, and bit validity as the
+        ///   underlying integer type, `i8`.
+        ///
+        /// [3] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicBool.html:
+        ///
+        ///   This type has the same size, alignment, and bit validity a `bool`.
         const _: () = unsafe {
             unsafe_impl_transmute_from_for_atomic!(
                 => AtomicU8 [u8],
@@ -553,18 +553,18 @@ mod atomics {
 
         impl_traits_for_atomics!(AtomicU16[u16], AtomicI16[i16]);
 
-        // SAFETY: `AtomicU16` and `AtomicI16` have the same size and bit
-        // validity as `u16` and `i16` respectively [1][2].
-        //
-        // [1] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicU16.html:
-        //
-        //   This type has the same size and bit validity as the underlying
-        //   integer type, `u16`.
-        //
-        // [2] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicI16.html:
-        //
-        //   This type has the same size and bit validity as the underlying
-        //   integer type, `i16`.
+        /// SAFETY: `AtomicU16` and `AtomicI16` have the same size and bit
+        /// validity as `u16` and `i16` respectively [1][2].
+        ///
+        /// [1] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicU16.html:
+        ///
+        ///   This type has the same size and bit validity as the underlying
+        ///   integer type, `u16`.
+        ///
+        /// [2] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicI16.html:
+        ///
+        ///   This type has the same size and bit validity as the underlying
+        ///   integer type, `i16`.
         const _: () = unsafe {
             unsafe_impl_transmute_from_for_atomic!(=> AtomicU16 [u16], => AtomicI16 [i16])
         };
@@ -579,18 +579,18 @@ mod atomics {
 
         impl_traits_for_atomics!(AtomicU32[u32], AtomicI32[i32]);
 
-        // SAFETY: `AtomicU32` and `AtomicI32` have the same size and bit
-        // validity as `u32` and `i32` respectively [1][2].
-        //
-        // [1] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicU32.html:
-        //
-        //   This type has the same size and bit validity as the underlying
-        //   integer type, `u32`.
-        //
-        // [2] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicI32.html:
-        //
-        //   This type has the same size and bit validity as the underlying
-        //   integer type, `i32`.
+        /// SAFETY: `AtomicU32` and `AtomicI32` have the same size and bit
+        /// validity as `u32` and `i32` respectively [1][2].
+        ///
+        /// [1] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicU32.html:
+        ///
+        ///   This type has the same size and bit validity as the underlying
+        ///   integer type, `u32`.
+        ///
+        /// [2] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicI32.html:
+        ///
+        ///   This type has the same size and bit validity as the underlying
+        ///   integer type, `i32`.
         const _: () = unsafe {
             unsafe_impl_transmute_from_for_atomic!(=> AtomicU32 [u32], => AtomicI32 [i32])
         };
@@ -605,18 +605,18 @@ mod atomics {
 
         impl_traits_for_atomics!(AtomicU64[u64], AtomicI64[i64]);
 
-        // SAFETY: `AtomicU64` and `AtomicI64` have the same size and bit
-        // validity as `u64` and `i64` respectively [1][2].
-        //
-        // [1] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicU64.html:
-        //
-        //   This type has the same size and bit validity as the underlying
-        //   integer type, `u64`.
-        //
-        // [2] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicI64.html:
-        //
-        //   This type has the same size and bit validity as the underlying
-        //   integer type, `i64`.
+        /// SAFETY: `AtomicU64` and `AtomicI64` have the same size and bit
+        /// validity as `u64` and `i64` respectively [1][2].
+        ///
+        /// [1] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicU64.html:
+        ///
+        ///   This type has the same size and bit validity as the underlying
+        ///   integer type, `u64`.
+        ///
+        /// [2] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicI64.html:
+        ///
+        ///   This type has the same size and bit validity as the underlying
+        ///   integer type, `i64`.
         const _: () = unsafe {
             unsafe_impl_transmute_from_for_atomic!(=> AtomicU64 [u64], => AtomicI64 [i64])
         };
@@ -638,40 +638,40 @@ mod atomics {
         impl_for_transmute_from!(T => TryFromBytes for AtomicPtr<T> [UnsafeCell<*mut T>]);
         impl_for_transmute_from!(T => FromZeros for AtomicPtr<T> [UnsafeCell<*mut T>]);
 
-        // SAFETY: `AtomicUsize` and `AtomicIsize` have the same size and bit
-        // validity as `usize` and `isize` respectively [1][2].
-        //
-        // [1] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicUsize.html:
-        //
-        //   This type has the same size and bit validity as the underlying
-        //   integer type, `usize`.
-        //
-        // [2] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicIsize.html:
-        //
-        //   This type has the same size and bit validity as the underlying
-        //   integer type, `isize`.
+        /// SAFETY: `AtomicUsize` and `AtomicIsize` have the same size and bit
+        /// validity as `usize` and `isize` respectively [1][2].
+        ///
+        /// [1] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicUsize.html:
+        ///
+        ///   This type has the same size and bit validity as the underlying
+        ///   integer type, `usize`.
+        ///
+        /// [2] Per https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicIsize.html:
+        ///
+        ///   This type has the same size and bit validity as the underlying
+        ///   integer type, `isize`.
         const _: () = unsafe {
             unsafe_impl_transmute_from_for_atomic!(=> AtomicUsize [usize], => AtomicIsize [isize])
         };
 
-        // SAFETY: Per
-        // https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicPtr.html:
-        //
-        //   This type has the same size and bit validity as a `*mut T`.
+        /// SAFETY: Per
+        /// https://doc.rust-lang.org/1.85.0/std/sync/atomic/struct.AtomicPtr.html:
+        ///
+        ///   This type has the same size and bit validity as a `*mut T`.
         const _: () = unsafe { unsafe_impl_transmute_from_for_atomic!(T => AtomicPtr<T> [*mut T]) };
     }
 }
 
-// SAFETY: Per reference [1]: "For all T, the following are guaranteed:
-// size_of::<PhantomData<T>>() == 0 align_of::<PhantomData<T>>() == 1". This
-// gives:
-// - `Immutable`: `PhantomData` has no fields.
-// - `TryFromBytes` (with no validator), `FromZeros`, `FromBytes`: There is only
-//   one possible sequence of 0 bytes, and `PhantomData` is inhabited.
-// - `IntoBytes`: Since `PhantomData` has size 0, it contains no padding bytes.
-// - `Unaligned`: Per the preceding reference, `PhantomData` has alignment 1.
-//
-// [1] https://doc.rust-lang.org/1.81.0/std/marker/struct.PhantomData.html#layout-1
+/// SAFETY: Per reference [1]: "For all T, the following are guaranteed:
+/// size_of::<PhantomData<T>>() == 0 align_of::<PhantomData<T>>() == 1". This
+/// gives:
+/// - `Immutable`: `PhantomData` has no fields.
+/// - `TryFromBytes` (with no validator), `FromZeros`, `FromBytes`: There is only
+///   one possible sequence of 0 bytes, and `PhantomData` is inhabited.
+/// - `IntoBytes`: Since `PhantomData` has size 0, it contains no padding bytes.
+/// - `Unaligned`: Per the preceding reference, `PhantomData` has alignment 1.
+///
+/// [1] https://doc.rust-lang.org/1.81.0/std/marker/struct.PhantomData.html#layout-1
 const _: () = unsafe {
     unsafe_impl!(T: ?Sized => Immutable for PhantomData<T>);
     unsafe_impl!(T: ?Sized => TryFromBytes for PhantomData<T>);
@@ -688,84 +688,84 @@ impl_for_transmute_from!(T: FromBytes => FromBytes for Wrapping<T>[<T>]);
 impl_for_transmute_from!(T: IntoBytes => IntoBytes for Wrapping<T>[<T>]);
 assert_unaligned!(Wrapping<()>, Wrapping<u8>);
 
-// SAFETY: Per [1], `Wrapping<T>` has the same layout as `T`. Since its single
-// field (of type `T`) is public, it would be a breaking change to add or remove
-// fields. Thus, we know that `Wrapping<T>` contains a `T` (as opposed to just
-// having the same size and alignment as `T`) with no pre- or post-padding.
-// Thus, `Wrapping<T>` must have `UnsafeCell`s covering the same byte ranges as
-// `Inner = T`.
-//
-// [1] Per https://doc.rust-lang.org/1.81.0/std/num/struct.Wrapping.html#layout-1:
-//
-//   `Wrapping<T>` is guaranteed to have the same layout and ABI as `T`
+/// SAFETY: Per [1], `Wrapping<T>` has the same layout as `T`. Since its single
+/// field (of type `T`) is public, it would be a breaking change to add or remove
+/// fields. Thus, we know that `Wrapping<T>` contains a `T` (as opposed to just
+/// having the same size and alignment as `T`) with no pre- or post-padding.
+/// Thus, `Wrapping<T>` must have `UnsafeCell`s covering the same byte ranges as
+/// `Inner = T`.
+///
+/// [1] Per https://doc.rust-lang.org/1.81.0/std/num/struct.Wrapping.html#layout-1:
+///
+///   `Wrapping<T>` is guaranteed to have the same layout and ABI as `T`
 const _: () = unsafe { unsafe_impl!(T: Immutable => Immutable for Wrapping<T>) };
 
-// SAFETY: Per [1] in the preceding safety comment, `Wrapping<T>` has the same
-// alignment as `T`.
+/// SAFETY: Per [1] in the preceding safety comment, `Wrapping<T>` has the same
+/// alignment as `T`.
 const _: () = unsafe { unsafe_impl!(T: Unaligned => Unaligned for Wrapping<T>) };
 
-// SAFETY: `TryFromBytes` (with no validator), `FromZeros`, `FromBytes`:
-// `MaybeUninit<T>` has no restrictions on its contents.
+/// SAFETY: `TryFromBytes` (with no validator), `FromZeros`, `FromBytes`:
+/// `MaybeUninit<T>` has no restrictions on its contents.
 const _: () = unsafe {
     unsafe_impl!(T => TryFromBytes for CoreMaybeUninit<T>);
     unsafe_impl!(T => FromZeros for CoreMaybeUninit<T>);
     unsafe_impl!(T => FromBytes for CoreMaybeUninit<T>);
 };
 
-// SAFETY: `MaybeUninit<T>` has `UnsafeCell`s covering the same byte ranges as
-// `Inner = T`. This is not explicitly documented, but it can be inferred. Per
-// [1], `MaybeUninit<T>` has the same size as `T`. Further, note the signature
-// of `MaybeUninit::assume_init_ref` [2]:
-//
-//   pub unsafe fn assume_init_ref(&self) -> &T
-//
-// If the argument `&MaybeUninit<T>` and the returned `&T` had `UnsafeCell`s at
-// different offsets, this would be unsound. Its existence is proof that this is
-// not the case.
-//
-// [1] Per https://doc.rust-lang.org/1.81.0/std/mem/union.MaybeUninit.html#layout-1:
-//
-// `MaybeUninit<T>` is guaranteed to have the same size, alignment, and ABI as
-// `T`.
-//
-// [2] https://doc.rust-lang.org/1.81.0/std/mem/union.MaybeUninit.html#method.assume_init_ref
+/// SAFETY: `MaybeUninit<T>` has `UnsafeCell`s covering the same byte ranges as
+/// `Inner = T`. This is not explicitly documented, but it can be inferred. Per
+/// [1], `MaybeUninit<T>` has the same size as `T`. Further, note the signature
+/// of `MaybeUninit::assume_init_ref` [2]:
+///
+///   pub unsafe fn assume_init_ref(&self) -> &T
+///
+/// If the argument `&MaybeUninit<T>` and the returned `&T` had `UnsafeCell`s at
+/// different offsets, this would be unsound. Its existence is proof that this is
+/// not the case.
+///
+/// [1] Per https://doc.rust-lang.org/1.81.0/std/mem/union.MaybeUninit.html#layout-1:
+///
+/// `MaybeUninit<T>` is guaranteed to have the same size, alignment, and ABI as
+/// `T`.
+///
+/// [2] https://doc.rust-lang.org/1.81.0/std/mem/union.MaybeUninit.html#method.assume_init_ref
 const _: () = unsafe { unsafe_impl!(T: Immutable => Immutable for CoreMaybeUninit<T>) };
 
-// SAFETY: Per [1] in the preceding safety comment, `MaybeUninit<T>` has the
-// same alignment as `T`.
+/// SAFETY: Per [1] in the preceding safety comment, `MaybeUninit<T>` has the
+/// same alignment as `T`.
 const _: () = unsafe { unsafe_impl!(T: Unaligned => Unaligned for CoreMaybeUninit<T>) };
 assert_unaligned!(CoreMaybeUninit<()>, CoreMaybeUninit<u8>);
 
-// SAFETY: `ManuallyDrop<T>` has the same layout as `T` [1]. This strongly
-// implies, but does not guarantee, that it contains `UnsafeCell`s covering the
-// same byte ranges as in `T`. However, it also implements `Defer<Target = T>`
-// [2], which provides the ability to convert `&ManuallyDrop<T> -> &T`. This,
-// combined with having the same size as `T`, implies that `ManuallyDrop<T>`
-// exactly contains a `T` with the same fields and `UnsafeCell`s covering the
-// same byte ranges, or else the `Deref` impl would permit safe code to obtain
-// different shared references to the same region of memory with different
-// `UnsafeCell` coverage, which would in turn permit interior mutation that
-// would violate the invariants of a shared reference.
-//
-// [1] Per https://doc.rust-lang.org/1.85.0/std/mem/struct.ManuallyDrop.html:
-//
-//   `ManuallyDrop<T>` is guaranteed to have the same layout and bit validity as
-//   `T`
-//
-// [2] https://doc.rust-lang.org/1.85.0/std/mem/struct.ManuallyDrop.html#impl-Deref-for-ManuallyDrop%3CT%3E
+/// SAFETY: `ManuallyDrop<T>` has the same layout as `T` [1]. This strongly
+/// implies, but does not guarantee, that it contains `UnsafeCell`s covering the
+/// same byte ranges as in `T`. However, it also implements `Defer<Target = T>`
+/// [2], which provides the ability to convert `&ManuallyDrop<T> -> &T`. This,
+/// combined with having the same size as `T`, implies that `ManuallyDrop<T>`
+/// exactly contains a `T` with the same fields and `UnsafeCell`s covering the
+/// same byte ranges, or else the `Deref` impl would permit safe code to obtain
+/// different shared references to the same region of memory with different
+/// `UnsafeCell` coverage, which would in turn permit interior mutation that
+/// would violate the invariants of a shared reference.
+///
+/// [1] Per https://doc.rust-lang.org/1.85.0/std/mem/struct.ManuallyDrop.html:
+///
+///   `ManuallyDrop<T>` is guaranteed to have the same layout and bit validity as
+///   `T`
+///
+/// [2] https://doc.rust-lang.org/1.85.0/std/mem/struct.ManuallyDrop.html#impl-Deref-for-ManuallyDrop%3CT%3E
 const _: () = unsafe { unsafe_impl!(T: ?Sized + Immutable => Immutable for ManuallyDrop<T>) };
 
 impl_for_transmute_from!(T: ?Sized + TryFromBytes => TryFromBytes for ManuallyDrop<T>[<T>]);
 impl_for_transmute_from!(T: ?Sized + FromZeros => FromZeros for ManuallyDrop<T>[<T>]);
 impl_for_transmute_from!(T: ?Sized + FromBytes => FromBytes for ManuallyDrop<T>[<T>]);
 impl_for_transmute_from!(T: ?Sized + IntoBytes => IntoBytes for ManuallyDrop<T>[<T>]);
-// SAFETY: `ManuallyDrop<T>` has the same layout as `T` [1], and thus has the
-// same alignment as `T`.
-//
-// [1] Per https://doc.rust-lang.org/nightly/core/mem/struct.ManuallyDrop.html:
-//
-//   `ManuallyDrop<T>` is guaranteed to have the same layout and bit validity as
-//   `T`
+/// SAFETY: `ManuallyDrop<T>` has the same layout as `T` [1], and thus has the
+/// same alignment as `T`.
+///
+/// [1] Per https://doc.rust-lang.org/nightly/core/mem/struct.ManuallyDrop.html:
+///
+///   `ManuallyDrop<T>` is guaranteed to have the same layout and bit validity as
+///   `T`
 const _: () = unsafe { unsafe_impl!(T: ?Sized + Unaligned => Unaligned for ManuallyDrop<T>) };
 assert_unaligned!(ManuallyDrop<()>, ManuallyDrop<u8>);
 
@@ -773,28 +773,28 @@ impl_for_transmute_from!(T: ?Sized + TryFromBytes => TryFromBytes for Cell<T>[Un
 impl_for_transmute_from!(T: ?Sized + FromZeros => FromZeros for Cell<T>[UnsafeCell<T>]);
 impl_for_transmute_from!(T: ?Sized + FromBytes => FromBytes for Cell<T>[UnsafeCell<T>]);
 impl_for_transmute_from!(T: ?Sized + IntoBytes => IntoBytes for Cell<T>[UnsafeCell<T>]);
-// SAFETY: `Cell<T>` has the same in-memory representation as `T` [1], and thus
-// has the same alignment as `T`.
-//
-// [1] Per https://doc.rust-lang.org/1.81.0/core/cell/struct.Cell.html#memory-layout:
-//
-//   `Cell<T>` has the same in-memory representation as its inner type `T`.
+/// SAFETY: `Cell<T>` has the same in-memory representation as `T` [1], and thus
+/// has the same alignment as `T`.
+///
+/// [1] Per https://doc.rust-lang.org/1.81.0/core/cell/struct.Cell.html#memory-layout:
+///
+///   `Cell<T>` has the same in-memory representation as its inner type `T`.
 const _: () = unsafe { unsafe_impl!(T: ?Sized + Unaligned => Unaligned for Cell<T>) };
 
 impl_for_transmute_from!(T: ?Sized + FromZeros => FromZeros for UnsafeCell<T>[<T>]);
 impl_for_transmute_from!(T: ?Sized + FromBytes => FromBytes for UnsafeCell<T>[<T>]);
 impl_for_transmute_from!(T: ?Sized + IntoBytes => IntoBytes for UnsafeCell<T>[<T>]);
-// SAFETY: `UnsafeCell<T>` has the same in-memory representation as `T` [1], and
-// thus has the same alignment as `T`.
-//
-// [1] Per https://doc.rust-lang.org/1.81.0/core/cell/struct.UnsafeCell.html#memory-layout:
-//
-//   `UnsafeCell<T>` has the same in-memory representation as its inner type
-//   `T`.
+/// SAFETY: `UnsafeCell<T>` has the same in-memory representation as `T` [1], and
+/// thus has the same alignment as `T`.
+///
+/// [1] Per https://doc.rust-lang.org/1.81.0/core/cell/struct.UnsafeCell.html#memory-layout:
+///
+///   `UnsafeCell<T>` has the same in-memory representation as its inner type
+///   `T`.
 const _: () = unsafe { unsafe_impl!(T: ?Sized + Unaligned => Unaligned for UnsafeCell<T>) };
 assert_unaligned!(UnsafeCell<()>, UnsafeCell<u8>);
 
-// SAFETY: See safety comment in `is_bit_valid` impl.
+/// SAFETY: See safety comment in `is_bit_valid` impl.
 unsafe impl<T: TryFromBytes + ?Sized> TryFromBytes for UnsafeCell<T> {
     #[allow(clippy::missing_inline_in_public_items)]
     fn only_derive_is_allowed_to_implement_this_trait()
@@ -822,35 +822,35 @@ unsafe impl<T: TryFromBytes + ?Sized> TryFromBytes for UnsafeCell<T> {
         // chance to fix it quickly.
         let c = candidate.into_exclusive_or_pme();
 
-        // SAFETY: Since `UnsafeCell<T>` and `T` have the same layout and bit
-        // validity, `UnsafeCell<T>` is bit-valid exactly when its wrapped `T`
-        // is. Thus, this is a sound implementation of
-        // `UnsafeCell::is_bit_valid`.
+        /// SAFETY: Since `UnsafeCell<T>` and `T` have the same layout and bit
+        /// validity, `UnsafeCell<T>` is bit-valid exactly when its wrapped `T`
+        /// is. Thus, this is a sound implementation of
+        /// `UnsafeCell::is_bit_valid`.
         T::is_bit_valid(c.get_mut())
     }
 }
 
-// SAFETY: Per the reference [1]:
-//
-//   An array of `[T; N]` has a size of `size_of::<T>() * N` and the same
-//   alignment of `T`. Arrays are laid out so that the zero-based `nth` element
-//   of the array is offset from the start of the array by `n * size_of::<T>()`
-//   bytes.
-//
-//   ...
-//
-//   Slices have the same layout as the section of the array they slice.
-//
-// In other words, the layout of a `[T]` or `[T; N]` is a sequence of `T`s laid
-// out back-to-back with no bytes in between. Therefore, `[T]` or `[T; N]` are
-// `Immutable`, `TryFromBytes`, `FromZeros`, `FromBytes`, and `IntoBytes` if `T`
-// is (respectively). Furthermore, since an array/slice has "the same alignment
-// of `T`", `[T]` and `[T; N]` are `Unaligned` if `T` is.
-//
-// Note that we don't `assert_unaligned!` for slice types because
-// `assert_unaligned!` uses `align_of`, which only works for `Sized` types.
-//
-// [1] https://doc.rust-lang.org/1.81.0/reference/type-layout.html#array-layout
+/// SAFETY: Per the reference [1]:
+///
+///   An array of `[T; N]` has a size of `size_of::<T>() * N` and the same
+///   alignment of `T`. Arrays are laid out so that the zero-based `nth` element
+///   of the array is offset from the start of the array by `n * size_of::<T>()`
+///   bytes.
+///
+///   ...
+///
+///   Slices have the same layout as the section of the array they slice.
+///
+/// In other words, the layout of a `[T]` or `[T; N]` is a sequence of `T`s laid
+/// out back-to-back with no bytes in between. Therefore, `[T]` or `[T; N]` are
+/// `Immutable`, `TryFromBytes`, `FromZeros`, `FromBytes`, and `IntoBytes` if `T`
+/// is (respectively). Furthermore, since an array/slice has "the same alignment
+/// of `T`", `[T]` and `[T; N]` are `Unaligned` if `T` is.
+///
+/// Note that we don't `assert_unaligned!` for slice types because
+/// `assert_unaligned!` uses `align_of`, which only works for `Sized` types.
+///
+/// [1] https://doc.rust-lang.org/1.81.0/reference/type-layout.html#array-layout
 const _: () = unsafe {
     unsafe_impl!(const N: usize, T: Immutable => Immutable for [T; N]);
     unsafe_impl!(const N: usize, T: TryFromBytes => TryFromBytes for [T; N]; |c| {
@@ -867,26 +867,26 @@ const _: () = unsafe {
     assert_unaligned!([(); 0], [(); 1], [u8; 0], [u8; 1]);
     unsafe_impl!(T: Immutable => Immutable for [T]);
     unsafe_impl!(T: TryFromBytes => TryFromBytes for [T]; |c| {
-        // SAFETY: Per the reference [1]:
-        //
-        //   An array of `[T; N]` has a size of `size_of::<T>() * N` and the
-        //   same alignment of `T`. Arrays are laid out so that the zero-based
-        //   `nth` element of the array is offset from the start of the array by
-        //   `n * size_of::<T>()` bytes.
-        //
-        //   ...
-        //
-        //   Slices have the same layout as the section of the array they slice.
-        //
-        // In other words, the layout of a `[T] is a sequence of `T`s laid out
-        // back-to-back with no bytes in between. If all elements in `candidate`
-        // are `is_bit_valid`, so too is `candidate`.
-        //
-        // Note that any of the below calls may panic, but it would still be
-        // sound even if it did. `is_bit_valid` does not promise that it will
-        // not panic (in fact, it explicitly warns that it's a possibility), and
-        // we have not violated any safety invariants that we must fix before
-        // returning.
+        /// SAFETY: Per the reference [1]:
+        ///
+        ///   An array of `[T; N]` has a size of `size_of::<T>() * N` and the
+        ///   same alignment of `T`. Arrays are laid out so that the zero-based
+        ///   `nth` element of the array is offset from the start of the array by
+        ///   `n * size_of::<T>()` bytes.
+        ///
+        ///   ...
+        ///
+        ///   Slices have the same layout as the section of the array they slice.
+        ///
+        /// In other words, the layout of a `[T] is a sequence of `T`s laid out
+        /// back-to-back with no bytes in between. If all elements in `candidate`
+        /// are `is_bit_valid`, so too is `candidate`.
+        ///
+        /// Note that any of the below calls may panic, but it would still be
+        /// sound even if it did. `is_bit_valid` does not promise that it will
+        /// not panic (in fact, it explicitly warns that it's a possibility), and
+        /// we have not violated any safety invariants that we must fix before
+        /// returning.
         c.iter().all(<T as TryFromBytes>::is_bit_valid)
     });
     unsafe_impl!(T: FromZeros => FromZeros for [T]);
@@ -895,22 +895,22 @@ const _: () = unsafe {
     unsafe_impl!(T: Unaligned => Unaligned for [T]);
 };
 
-// SAFETY:
-// - `Immutable`: Raw pointers do not contain any `UnsafeCell`s.
-// - `FromZeros`: For thin pointers (note that `T: Sized`), the zero pointer is
-//   considered "null". [1] No operations which require provenance are legal on
-//   null pointers, so this is not a footgun.
-// - `TryFromBytes`: By the same reasoning as for `FromZeroes`, we can implement
-//   `TryFromBytes` for thin pointers provided that
-//   [`TryFromByte::is_bit_valid`] only produces `true` for zeroed bytes.
-//
-// NOTE(#170): Implementing `FromBytes` and `IntoBytes` for raw pointers would
-// be sound, but carries provenance footguns. We want to support `FromBytes` and
-// `IntoBytes` for raw pointers eventually, but we are holding off until we can
-// figure out how to address those footguns.
-//
-// [1] FIXME(https://github.com/rust-lang/rust/pull/116988): Cite the
-// documentation once this PR lands.
+/// SAFETY:
+/// - `Immutable`: Raw pointers do not contain any `UnsafeCell`s.
+/// - `FromZeros`: For thin pointers (note that `T: Sized`), the zero pointer is
+///   considered "null". [1] No operations which require provenance are legal on
+///   null pointers, so this is not a footgun.
+/// - `TryFromBytes`: By the same reasoning as for `FromZeroes`, we can implement
+///   `TryFromBytes` for thin pointers provided that
+///   [`TryFromByte::is_bit_valid`] only produces `true` for zeroed bytes.
+///
+/// NOTE(#170): Implementing `FromBytes` and `IntoBytes` for raw pointers would
+/// be sound, but carries provenance footguns. We want to support `FromBytes` and
+/// `IntoBytes` for raw pointers eventually, but we are holding off until we can
+/// figure out how to address those footguns.
+///
+/// [1] FIXME(https://github.com/rust-lang/rust/pull/116988): Cite the
+/// documentation once this PR lands.
 const _: () = unsafe {
     unsafe_impl!(T: ?Sized => Immutable for *const T);
     unsafe_impl!(T: ?Sized => Immutable for *mut T);
@@ -920,21 +920,21 @@ const _: () = unsafe {
     unsafe_impl!(T => FromZeros for *mut T);
 };
 
-// SAFETY: `NonNull<T>` self-evidently does not contain `UnsafeCell`s. This is
-// not a proof, but we are accepting this as a known risk per #1358.
+/// SAFETY: `NonNull<T>` self-evidently does not contain `UnsafeCell`s. This is
+/// not a proof, but we are accepting this as a known risk per #1358.
 const _: () = unsafe { unsafe_impl!(T: ?Sized => Immutable for NonNull<T>) };
 
-// SAFETY: Reference types do not contain any `UnsafeCell`s.
+/// SAFETY: Reference types do not contain any `UnsafeCell`s.
 const _: () = unsafe {
     unsafe_impl!(T: ?Sized => Immutable for &'_ T);
     unsafe_impl!(T: ?Sized => Immutable for &'_ mut T);
 };
 
-// SAFETY: `Option` is not `#[non_exhaustive]` [1], which means that the types
-// in its variants cannot change, and no new variants can be added. `Option<T>`
-// does not contain any `UnsafeCell`s outside of `T`. [1]
-//
-// [1] https://doc.rust-lang.org/core/option/enum.Option.html
+/// SAFETY: `Option` is not `#[non_exhaustive]` [1], which means that the types
+/// in its variants cannot change, and no new variants can be added. `Option<T>`
+/// does not contain any `UnsafeCell`s outside of `T`. [1]
+///
+/// [1] https://doc.rust-lang.org/core/option/enum.Option.html
 const _: () = unsafe { unsafe_impl!(T: Immutable => Immutable for Option<T>) };
 
 // SIMD support
@@ -1025,7 +1025,7 @@ mod simd {
 
                 use crate::*;
                 impl_known_layout!($($typ),*);
-                // SAFETY: See comment on module definition for justification.
+                /// SAFETY: See comment on module definition for justification.
                 const _: () = unsafe {
                     $( unsafe_impl!($typ: Immutable, TryFromBytes, FromZeros, FromBytes, IntoBytes); )*
                 };
@@ -1108,7 +1108,7 @@ mod tests {
                 let ffs = {
                     let mut t = Self::new_zeroed();
                     let ptr: *mut T = &mut t;
-                    // SAFETY: `T: FromBytes`
+                    /// SAFETY: `T: FromBytes`
                     unsafe { ptr::write_bytes(ptr.cast::<u8>(), 0xFF, mem::size_of::<T>()) };
                     t
                 };
@@ -1487,9 +1487,9 @@ mod tests {
 
                     let c = Ptr::from_ref(&*val);
                     let c = c.forget_aligned();
-                    // SAFETY: FIXME(#899): This is unsound. `$ty` is not
-                    // necessarily `IntoBytes`, but that's the corner we've
-                    // backed ourselves into by using `Ptr::from_ref`.
+                    /// SAFETY: FIXME(#899): This is unsound. `$ty` is not
+                    /// necessarily `IntoBytes`, but that's the corner we've
+                    /// backed ourselves into by using `Ptr::from_ref`.
                     let c = unsafe { c.assume_initialized() };
                     let res = w.test_is_bit_valid_shared(c);
                     if let Some(res) = res {
@@ -1498,9 +1498,9 @@ mod tests {
 
                     let c = Ptr::from_mut(&mut *val);
                     let c = c.forget_aligned();
-                    // SAFETY: FIXME(#899): This is unsound. `$ty` is not
-                    // necessarily `IntoBytes`, but that's the corner we've
-                    // backed ourselves into by using `Ptr::from_ref`.
+                    /// SAFETY: FIXME(#899): This is unsound. `$ty` is not
+                    /// necessarily `IntoBytes`, but that's the corner we've
+                    /// backed ourselves into by using `Ptr::from_ref`.
                     let c = unsafe { c.assume_initialized() };
                     let res = <$ty as TryFromBytes>::is_bit_valid(c);
                     assert!(res, "{}::is_bit_valid({:?}) (exclusive `Ptr`): got false, expected true", stringify!($ty), val);

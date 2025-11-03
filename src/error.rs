@@ -343,10 +343,10 @@ impl<Src, Dst: ?Sized> AlignmentError<Src, Dst> {
 impl<Src, Dst: ?Sized + Unaligned> From<AlignmentError<Src, Dst>> for Infallible {
     #[inline(always)]
     fn from(_: AlignmentError<Src, Dst>) -> Infallible {
-        // SAFETY: `AlignmentError`s can only be constructed when `Dst`'s
-        // alignment requirement is greater than one. In this block, `Dst:
-        // Unaligned`, which means that its alignment requirement is equal to
-        // one. Thus, it's not possible to reach here at runtime.
+        /// SAFETY: `AlignmentError`s can only be constructed when `Dst`'s
+        /// alignment requirement is greater than one. In this block, `Dst:
+        /// Unaligned`, which means that its alignment requirement is equal to
+        /// one. Thus, it's not possible to reach here at runtime.
         unsafe { core::hint::unreachable_unchecked() }
     }
 }
@@ -357,8 +357,8 @@ impl<Src, Dst> AlignmentError<Src, Dst> {
     // `unsafe`.
     fn new_checked(src: Src) -> AlignmentError<Src, Dst> {
         assert_ne!(core::mem::align_of::<Dst>(), 1);
-        // SAFETY: The preceding assertion guarantees that `Dst`'s alignment
-        // requirement is greater than one.
+        /// SAFETY: The preceding assertion guarantees that `Dst`'s alignment
+        /// requirement is greater than one.
         unsafe { AlignmentError::new_unchecked(src) }
     }
 }

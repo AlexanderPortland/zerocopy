@@ -109,13 +109,15 @@ pub unsafe trait SplitByteSlice: ByteSlice {
     #[inline]
     fn split_at(self, mid: usize) -> Result<(Self, Self), Self> {
         if mid <= self.deref().len() {
-            // SAFETY: Above, we ensure that `mid <= self.deref().len()`. By
-            // invariant on `ByteSlice`, a supertrait of `SplitByteSlice`,
-            // `.deref()` is guaranteed to be "stable"; i.e., it will always
-            // dereference to a byte slice of the same address and length. Thus,
-            // we can be sure that the above precondition remains satisfied
-            // through the call to `split_at_unchecked`.
-            unsafe { Ok(self.split_at_unchecked(mid)) }
+            /// SAFETY: Above, we ensure that `mid <= self.deref().len()`. By
+            /// invariant on `ByteSlice`, a supertrait of `SplitByteSlice`,
+            /// `.deref()` is guaranteed to be "stable"; i.e., it will always
+            /// dereference to a byte slice of the same address and length. Thus,
+            /// we can be sure that the above precondition remains satisfied
+            /// through the call to `split_at_unchecked`.
+            unsafe {
+                Ok(self.split_at_unchecked(mid))
+            }
         } else {
             Err(self)
         }
@@ -205,25 +207,27 @@ unsafe impl CopyableByteSlice for &[u8] {}
 #[allow(clippy::undocumented_unsafe_blocks)]
 unsafe impl CloneableByteSlice for &[u8] {}
 
-// SAFETY: This delegates to `polyfills:split_at_unchecked`, which is documented
-// to correctly split `self` into two slices at the given `mid` point.
+/// SAFETY: This delegates to `polyfills:split_at_unchecked`, which is documented
+/// to correctly split `self` into two slices at the given `mid` point.
 unsafe impl SplitByteSlice for &[u8] {
     #[inline]
     unsafe fn split_at_unchecked(self, mid: usize) -> (Self, Self) {
-        // SAFETY: By contract on caller, `mid` is not greater than
-        // `bytes.len()`.
-        unsafe { (<[u8]>::get_unchecked(self, ..mid), <[u8]>::get_unchecked(self, mid..)) }
+        /// SAFETY: By contract on caller, `mid` is not greater than
+        /// `bytes.len()`.
+        unsafe {
+            (<[u8]>::get_unchecked(self, ..mid), <[u8]>::get_unchecked(self, mid..))
+        }
     }
 }
 
-// SAFETY: See inline.
+/// SAFETY: See inline.
 unsafe impl<'a> IntoByteSlice<'a> for &'a [u8] {
     #[inline(always)]
     fn into_byte_slice(self) -> &'a [u8] {
-        // SAFETY: It would be patently insane to implement `<Deref for
-        // &[u8]>::deref` as anything other than `fn deref(&self) -> &[u8] {
-        // *self }`. Assuming this holds, then `self` is stable as required by
-        // `into_byte_slice`.
+        /// SAFETY: It would be patently insane to implement `<Deref for
+        /// &[u8]>::deref` as anything other than `fn deref(&self) -> &[u8] {
+        /// *self }`. Assuming this holds, then `self` is stable as required by
+        /// `into_byte_slice`.
         self
     }
 }
@@ -232,9 +236,9 @@ unsafe impl<'a> IntoByteSlice<'a> for &'a [u8] {
 #[allow(clippy::undocumented_unsafe_blocks)]
 unsafe impl ByteSlice for &mut [u8] {}
 
-// SAFETY: This delegates to `polyfills:split_at_mut_unchecked`, which is
-// documented to correctly split `self` into two slices at the given `mid`
-// point.
+/// SAFETY: This delegates to `polyfills:split_at_mut_unchecked`, which is
+/// documented to correctly split `self` into two slices at the given `mid`
+/// point.
 unsafe impl SplitByteSlice for &mut [u8] {
     #[inline]
     unsafe fn split_at_unchecked(self, mid: usize) -> (Self, Self) {
@@ -244,71 +248,73 @@ unsafe impl SplitByteSlice for &mut [u8] {
         // `&mut [u8]`.
         let l_ptr = self.as_mut_ptr();
 
-        // SAFETY: By contract on caller, `mid` is not greater than
-        // `self.len()`.
+        /// SAFETY: By contract on caller, `mid` is not greater than
+        /// `self.len()`.
         let r_ptr = unsafe { l_ptr.add(mid) };
 
         let l_len = mid;
 
-        // SAFETY: By contract on caller, `mid` is not greater than
-        // `self.len()`.
-        //
-        // FIXME(#67): Remove this allow. See NumExt for more details.
+        /// SAFETY: By contract on caller, `mid` is not greater than
+        /// `self.len()`.
+        ///
+        /// FIXME(#67): Remove this allow. See NumExt for more details.
         #[allow(unstable_name_collisions)]
         let r_len = unsafe { self.len().unchecked_sub(mid) };
 
-        // SAFETY: These invocations of `from_raw_parts_mut` satisfy its
-        // documented safety preconditions [1]:
-        // - The data `l_ptr` and `r_ptr` are valid for both reads and writes of
-        //   `l_len` and `r_len` bytes, respectively, and they are trivially
-        //   aligned. In particular:
-        //   - The entire memory range of each slice is contained within a
-        //     single allocated object, since `l_ptr` and `r_ptr` are both
-        //     derived from within the address range of `self`.
-        //   - Both `l_ptr` and `r_ptr` are non-null and trivially aligned.
-        //     `self` is non-null by invariant on `&mut [u8]`, and the
-        //     operations that derive `l_ptr` and `r_ptr` from `self` do not
-        //     nullify either pointer.
-        // - The data `l_ptr` and `r_ptr` point to `l_len` and `r_len`,
-        //   respectively, consecutive properly initialized values of type `u8`.
-        //   This is true for `self` by invariant on `&mut [u8]`, and remains
-        //   true for these two sub-slices of `self`.
-        // - The memory referenced by the returned slice cannot be accessed
-        //   through any other pointer (not derived from the return value) for
-        //   the duration of lifetime `'a``, because:
-        //   - `split_at_unchecked` consumes `self` (which is not `Copy`),
-        //   - `split_at_unchecked` does not exfiltrate any references to this
-        //     memory, besides those references returned below,
-        //   - the returned slices are non-overlapping.
-        // - The individual sizes of the sub-slices of `self` are no larger than
-        //   `isize::MAX`, because their combined sizes are no larger than
-        //   `isize::MAX`, by invariant on `self`.
-        //
-        // [1] https://doc.rust-lang.org/std/slice/fn.from_raw_parts_mut.html#safety
-        unsafe { (from_raw_parts_mut(l_ptr, l_len), from_raw_parts_mut(r_ptr, r_len)) }
+        /// SAFETY: These invocations of `from_raw_parts_mut` satisfy its
+        /// documented safety preconditions [1]:
+        /// - The data `l_ptr` and `r_ptr` are valid for both reads and writes of
+        ///   `l_len` and `r_len` bytes, respectively, and they are trivially
+        ///   aligned. In particular:
+        ///   - The entire memory range of each slice is contained within a
+        ///     single allocated object, since `l_ptr` and `r_ptr` are both
+        ///     derived from within the address range of `self`.
+        ///   - Both `l_ptr` and `r_ptr` are non-null and trivially aligned.
+        ///     `self` is non-null by invariant on `&mut [u8]`, and the
+        ///     operations that derive `l_ptr` and `r_ptr` from `self` do not
+        ///     nullify either pointer.
+        /// - The data `l_ptr` and `r_ptr` point to `l_len` and `r_len`,
+        ///   respectively, consecutive properly initialized values of type `u8`.
+        ///   This is true for `self` by invariant on `&mut [u8]`, and remains
+        ///   true for these two sub-slices of `self`.
+        /// - The memory referenced by the returned slice cannot be accessed
+        ///   through any other pointer (not derived from the return value) for
+        ///   the duration of lifetime `'a``, because:
+        ///   - `split_at_unchecked` consumes `self` (which is not `Copy`),
+        ///   - `split_at_unchecked` does not exfiltrate any references to this
+        ///     memory, besides those references returned below,
+        ///   - the returned slices are non-overlapping.
+        /// - The individual sizes of the sub-slices of `self` are no larger than
+        ///   `isize::MAX`, because their combined sizes are no larger than
+        ///   `isize::MAX`, by invariant on `self`.
+        ///
+        /// [1] https://doc.rust-lang.org/std/slice/fn.from_raw_parts_mut.html#safety
+        unsafe {
+            (from_raw_parts_mut(l_ptr, l_len), from_raw_parts_mut(r_ptr, r_len))
+        }
     }
 }
 
-// SAFETY: See inline.
+/// SAFETY: See inline.
 unsafe impl<'a> IntoByteSlice<'a> for &'a mut [u8] {
     #[inline(always)]
     fn into_byte_slice(self) -> &'a [u8] {
-        // SAFETY: It would be patently insane to implement `<Deref for &mut
-        // [u8]>::deref` as anything other than `fn deref(&self) -> &[u8] {
-        // *self }`. Assuming this holds, then `self` is stable as required by
-        // `into_byte_slice`.
+        /// SAFETY: It would be patently insane to implement `<Deref for &mut
+        /// [u8]>::deref` as anything other than `fn deref(&self) -> &[u8] {
+        /// *self }`. Assuming this holds, then `self` is stable as required by
+        /// `into_byte_slice`.
         self
     }
 }
 
-// SAFETY: See inline.
+/// SAFETY: See inline.
 unsafe impl<'a> IntoByteSliceMut<'a> for &'a mut [u8] {
     #[inline(always)]
     fn into_byte_slice_mut(self) -> &'a mut [u8] {
-        // SAFETY: It would be patently insane to implement `<DerefMut for &mut
-        // [u8]>::deref` as anything other than `fn deref_mut(&mut self) -> &mut
-        // [u8] { *self }`. Assuming this holds, then `self` is stable as
-        // required by `into_byte_slice_mut`.
+        /// SAFETY: It would be patently insane to implement `<DerefMut for &mut
+        /// [u8]>::deref` as anything other than `fn deref_mut(&mut self) -> &mut
+        /// [u8] { *self }`. Assuming this holds, then `self` is stable as
+        /// required by `into_byte_slice_mut`.
         self
     }
 }
@@ -317,19 +323,20 @@ unsafe impl<'a> IntoByteSliceMut<'a> for &'a mut [u8] {
 #[allow(clippy::undocumented_unsafe_blocks)]
 unsafe impl ByteSlice for cell::Ref<'_, [u8]> {}
 
-// SAFETY: This delegates to stdlib implementation of `Ref::map_split`, which is
-// assumed to be correct, and `SplitByteSlice::split_at_unchecked`, which is
-// documented to correctly split `self` into two slices at the given `mid`
-// point.
+/// SAFETY: This delegates to stdlib implementation of `Ref::map_split`, which is
+/// assumed to be correct, and `SplitByteSlice::split_at_unchecked`, which is
+/// documented to correctly split `self` into two slices at the given `mid`
+/// point.
 unsafe impl SplitByteSlice for cell::Ref<'_, [u8]> {
     #[inline]
     unsafe fn split_at_unchecked(self, mid: usize) -> (Self, Self) {
-        cell::Ref::map_split(self, |slice|
-            // SAFETY: By precondition on caller, `mid` is not greater than
-            // `slice.len()`.
+        cell::Ref::map_split(self, |slice| {
+            /// SAFETY: By precondition on caller, `mid` is not greater than
+            /// `slice.len()`.
             unsafe {
                 SplitByteSlice::split_at_unchecked(slice, mid)
-            })
+            }
+        })
     }
 }
 
@@ -337,19 +344,20 @@ unsafe impl SplitByteSlice for cell::Ref<'_, [u8]> {
 #[allow(clippy::undocumented_unsafe_blocks)]
 unsafe impl ByteSlice for cell::RefMut<'_, [u8]> {}
 
-// SAFETY: This delegates to stdlib implementation of `RefMut::map_split`, which
-// is assumed to be correct, and `SplitByteSlice::split_at_unchecked`, which is
-// documented to correctly split `self` into two slices at the given `mid`
-// point.
+/// SAFETY: This delegates to stdlib implementation of `RefMut::map_split`, which
+/// is assumed to be correct, and `SplitByteSlice::split_at_unchecked`, which is
+/// documented to correctly split `self` into two slices at the given `mid`
+/// point.
 unsafe impl SplitByteSlice for cell::RefMut<'_, [u8]> {
     #[inline]
     unsafe fn split_at_unchecked(self, mid: usize) -> (Self, Self) {
-        cell::RefMut::map_split(self, |slice|
-            // SAFETY: By precondition on caller, `mid` is not greater than
-            // `slice.len()`
+        cell::RefMut::map_split(self, |slice| {
+            /// SAFETY: By precondition on caller, `mid` is not greater than
+            /// `slice.len()`
             unsafe {
                 SplitByteSlice::split_at_unchecked(slice, mid)
-            })
+            }
+        })
     }
 }
 

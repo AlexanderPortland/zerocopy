@@ -209,35 +209,35 @@ fn derive_known_layout_inner(
 
         let make_methods = |trailing_field_ty| {
             quote! {
-                // SAFETY:
-                // - The returned pointer has the same address and provenance as
-                //   `bytes`:
-                //   - The recursive call to `raw_from_ptr_len` preserves both
-                //     address and provenance.
-                //   - The `as` cast preserves both address and provenance.
-                //   - `NonNull::new_unchecked` preserves both address and
-                //     provenance.
-                // - If `Self` is a slice DST, the returned pointer encodes
-                //   `elems` elements in the trailing slice:
-                //   - This is true of the recursive call to `raw_from_ptr_len`.
-                //   - `trailing.as_ptr() as *mut Self` preserves trailing slice
-                //     element count [1].
-                //   - `NonNull::new_unchecked` preserves trailing slice element
-                //     count.
-                //
-                // [1] Per https://doc.rust-lang.org/reference/expressions/operator-expr.html#pointer-to-pointer-cast:
-                //
-                //   `*const T`` / `*mut T` can be cast to `*const U` / `*mut U`
-                //   with the following behavior:
-                //     ...
-                //     - If `T` and `U` are both unsized, the pointer is also
-                //       returned unchanged. In particular, the metadata is
-                //       preserved exactly.
-                //
-                //       For instance, a cast from `*const [T]` to `*const [U]`
-                //       preserves the number of elements. ... The same holds
-                //       for str and any compound type whose unsized tail is a
-                //       slice type, such as struct `Foo(i32, [u8])` or `(u64, Foo)`.
+                /// SAFETY:
+                /// - The returned pointer has the same address and provenance as
+                ///   `bytes`:
+                ///   - The recursive call to `raw_from_ptr_len` preserves both
+                ///     address and provenance.
+                ///   - The `as` cast preserves both address and provenance.
+                ///   - `NonNull::new_unchecked` preserves both address and
+                ///     provenance.
+                /// - If `Self` is a slice DST, the returned pointer encodes
+                ///   `elems` elements in the trailing slice:
+                ///   - This is true of the recursive call to `raw_from_ptr_len`.
+                ///   - `trailing.as_ptr() as *mut Self` preserves trailing slice
+                ///     element count [1].
+                ///   - `NonNull::new_unchecked` preserves trailing slice element
+                ///     count.
+                ///
+                /// [1] Per https://doc.rust-lang.org/reference/expressions/operator-expr.html#pointer-to-pointer-cast:
+                ///
+                ///   `*const T`` / `*mut T` can be cast to `*const U` / `*mut U`
+                ///   with the following behavior:
+                ///     ...
+                ///     - If `T` and `U` are both unsized, the pointer is also
+                ///       returned unchanged. In particular, the metadata is
+                ///       preserved exactly.
+                ///
+                ///       For instance, a cast from `*const [T]` to `*const [U]`
+                ///       preserves the number of elements. ... The same holds
+                ///       for str and any compound type whose unsized tail is a
+                ///       slice type, such as struct `Foo(i32, [u8])` or `(u64, Foo)`.
                 #[inline(always)]
                 fn raw_from_ptr_len(
                     bytes: #zerocopy_crate::util::macro_util::core_reexport::ptr::NonNull<u8>,
@@ -246,7 +246,7 @@ fn derive_known_layout_inner(
                     use #zerocopy_crate::KnownLayout;
                     let trailing = <#trailing_field_ty as KnownLayout>::raw_from_ptr_len(bytes, meta);
                     let slf = trailing.as_ptr() as *mut Self;
-                    // SAFETY: Constructed from `trailing`, which is non-null.
+                    /// SAFETY: Constructed from `trailing`, which is non-null.
                     unsafe { #zerocopy_crate::util::macro_util::core_reexport::ptr::NonNull::new_unchecked(slf) }
                 }
 
@@ -267,20 +267,20 @@ fn derive_known_layout_inner(
 
                 type MaybeUninit = __ZerocopyKnownLayoutMaybeUninit #ty_generics;
 
-                // SAFETY: `LAYOUT` accurately describes the layout of `Self`.
-                // The documentation of `DstLayout::for_repr_c_struct` vows that
-                // invocations in this manner will accurately describe a type,
-                // so long as:
-                //
-                //  - that type is `repr(C)`,
-                //  - its fields are enumerated in the order they appear,
-                //  - the presence of `repr_align` and `repr_packed` are
-                //    correctly accounted for.
-                //
-                // We respect all three of these preconditions here. This
-                // expansion is only used if `is_repr_c_struct`, we enumerate
-                // the fields in order, and we extract the values of `align(N)`
-                // and `packed(N)`.
+                /// SAFETY: `LAYOUT` accurately describes the layout of `Self`.
+                /// The documentation of `DstLayout::for_repr_c_struct` vows that
+                /// invocations in this manner will accurately describe a type,
+                /// so long as:
+                ///
+                ///  - that type is `repr(C)`,
+                ///  - its fields are enumerated in the order they appear,
+                ///  - the presence of `repr_align` and `repr_packed` are
+                ///    correctly accounted for.
+                ///
+                /// We respect all three of these preconditions here. This
+                /// expansion is only used if `is_repr_c_struct`, we enumerate
+                /// the fields in order, and we extract the values of `align(N)`
+                /// and `packed(N)`.
                 const LAYOUT: #zerocopy_crate::DstLayout = {
                     use #zerocopy_crate::util::macro_util::core_reexport::num::NonZeroUsize;
                     use #zerocopy_crate::{DstLayout, KnownLayout};
@@ -328,7 +328,7 @@ fn derive_known_layout_inner(
             });
 
             let field_impls = field_indices.iter().zip(&fields).map(|(idx, (_, _, ty))| quote! {
-                // SAFETY: `#ty` is the type of `#ident`'s field at `#idx`.
+                /// SAFETY: `#ty` is the type of `#ident`'s field at `#idx`.
                 unsafe impl #impl_generics #zerocopy_crate::util::macro_util::Field<#idx> for #ident #ty_generics
                 where
                     #predicates
@@ -356,13 +356,13 @@ fn derive_known_layout_inner(
 
                 #(#field_impls)*
 
-                // SAFETY: This has the same layout as the derive target type,
-                // except that it admits uninit bytes. This is ensured by using
-                // the same repr as the target type, and by using field types
-                // which have the same layout as the target type's fields,
-                // except that they admit uninit bytes. We indirect through
-                // `Field` to ensure that occurrences of `Self` resolve to
-                // `#ty`, not `__ZerocopyKnownLayoutMaybeUninit` (see #2116).
+                /// SAFETY: This has the same layout as the derive target type,
+                /// except that it admits uninit bytes. This is ensured by using
+                /// the same repr as the target type, and by using field types
+                /// which have the same layout as the target type's fields,
+                /// except that they admit uninit bytes. We indirect through
+                /// `Field` to ensure that occurrences of `Self` resolve to
+                /// `#ty`, not `__ZerocopyKnownLayoutMaybeUninit` (see #2116).
                 #repr
                 #[doc(hidden)]
                 // Required on some rustc versions due to a lint that is only
@@ -389,12 +389,12 @@ fn derive_known_layout_inner(
                     #trailing_field_ty: #zerocopy_crate::KnownLayout,
                     #predicates;
 
-                // SAFETY: We largely defer to the `KnownLayout` implementation on
-                // the derive target type (both by using the same tokens, and by
-                // deferring to impl via type-level indirection). This is sound,
-                // since  `__ZerocopyKnownLayoutMaybeUninit` is guaranteed to
-                // have the same layout as the derive target type, except that
-                // `__ZerocopyKnownLayoutMaybeUninit` admits uninit bytes.
+                /// SAFETY: We largely defer to the `KnownLayout` implementation on
+                /// the derive target type (both by using the same tokens, and by
+                /// deferring to impl via type-level indirection). This is sound,
+                /// since  `__ZerocopyKnownLayoutMaybeUninit` is guaranteed to
+                /// have the same layout as the derive target type, except that
+                /// `__ZerocopyKnownLayoutMaybeUninit` admits uninit bytes.
                 unsafe impl #impl_generics #zerocopy_crate::KnownLayout for __ZerocopyKnownLayoutMaybeUninit #ty_generics
                 where
                     #trailing_field_ty: #zerocopy_crate::KnownLayout,
@@ -426,15 +426,15 @@ fn derive_known_layout_inner(
                 type MaybeUninit =
                     #zerocopy_crate::util::macro_util::core_reexport::mem::MaybeUninit<Self>;
 
-                // SAFETY: `LAYOUT` is guaranteed to accurately describe the
-                // layout of `Self`, because that is the documented safety
-                // contract of `DstLayout::for_type`.
+                /// SAFETY: `LAYOUT` is guaranteed to accurately describe the
+                /// layout of `Self`, because that is the documented safety
+                /// contract of `DstLayout::for_type`.
                 const LAYOUT: #zerocopy_crate::DstLayout = #zerocopy_crate::DstLayout::for_type::<Self>();
 
-                // SAFETY: `.cast` preserves address and provenance.
-                //
-                // FIXME(#429): Add documentation to `.cast` that promises that
-                // it preserves provenance.
+                /// SAFETY: `.cast` preserves address and provenance.
+                ///
+                /// FIXME(#429): Add documentation to `.cast` that promises that
+                /// it preserves provenance.
                 #[inline(always)]
                 fn raw_from_ptr_len(
                     bytes: #zerocopy_crate::util::macro_util::core_reexport::ptr::NonNull<u8>,
@@ -711,10 +711,10 @@ fn derive_split_at_inner(
         return Err(Error::new(Span::call_site(), "must at least one field"));
     };
 
-    // SAFETY: `#ty`, per the above checks, is `repr(C)` or `repr(transparent)`
-    // and is not packed; its trailing field is guaranteed to be well-aligned
-    // for its type. By invariant on `FieldBounds::TRAILING_SELF`, the trailing
-    // slice of the trailing field is also well-aligned for its type.
+    /// SAFETY: `#ty`, per the above checks, is `repr(C)` or `repr(transparent)`
+    /// and is not packed; its trailing field is guaranteed to be well-aligned
+    /// for its type. By invariant on `FieldBounds::TRAILING_SELF`, the trailing
+    /// slice of the trailing field is also well-aligned for its type.
     Ok(ImplBlockBuilder::new(
         ast,
         &ast.data,
@@ -742,11 +742,11 @@ fn derive_try_from_bytes_struct(
             let field_names = fields.iter().map(|(_vis, name, _ty)| name);
             let field_tys = fields.iter().map(|(_vis, _name, ty)| ty);
             quote!(
-                // SAFETY: We use `is_bit_valid` to validate that each field is
-                // bit-valid, and only return `true` if all of them are. The bit
-                // validity of a struct is just the composition of the bit
-                // validities of its fields, so this is a sound implementation of
-                // `is_bit_valid`.
+                /// SAFETY: We use `is_bit_valid` to validate that each field is
+                /// bit-valid, and only return `true` if all of them are. The bit
+                /// validity of a struct is just the composition of the bit
+                /// validities of its fields, so this is a sound implementation of
+                /// `is_bit_valid`.
                 fn is_bit_valid<___ZerocopyAliasing>(
                     mut candidate: #zerocopy_crate::Maybe<Self, ___ZerocopyAliasing>,
                 ) -> #zerocopy_crate::util::macro_util::core_reexport::primitive::bool
@@ -757,35 +757,35 @@ fn derive_try_from_bytes_struct(
                     use #zerocopy_crate::pointer::PtrInner;
 
                     true #(&& {
-                        // SAFETY:
-                        // - `project` is a field projection, and so it addresses a
-                        //   subset of the bytes addressed by `slf`
-                        // - ..., and so it preserves provenance
-                        // - ..., and `*slf` is a struct, so `UnsafeCell`s exist at
-                        //   the same byte ranges in the returned pointer's referent
-                        //   as they do in `*slf`
+                        /// SAFETY:
+                        /// - `project` is a field projection, and so it addresses a
+                        ///   subset of the bytes addressed by `slf`
+                        /// - ..., and so it preserves provenance
+                        /// - ..., and `*slf` is a struct, so `UnsafeCell`s exist at
+                        ///   the same byte ranges in the returned pointer's referent
+                        ///   as they do in `*slf`
                         let field_candidate = unsafe {
                             let project = |slf: PtrInner<'_, Self>| {
                                 let slf = slf.as_non_null().as_ptr();
                                 let field = core_reexport::ptr::addr_of_mut!((*slf).#field_names);
-                                // SAFETY: `cast_unsized_unchecked` promises that
-                                // `slf` will either reference a zero-sized byte
-                                // range, or else will reference a byte range that
-                                // is entirely contained within an allocated
-                                // object. In either case, this guarantees that
-                                // field projection will not wrap around the address
-                                // space, and so `field` will be non-null.
+                                /// SAFETY: `cast_unsized_unchecked` promises that
+                                /// `slf` will either reference a zero-sized byte
+                                /// range, or else will reference a byte range that
+                                /// is entirely contained within an allocated
+                                /// object. In either case, this guarantees that
+                                /// field projection will not wrap around the address
+                                /// space, and so `field` will be non-null.
                                 let ptr = unsafe { core_reexport::ptr::NonNull::new_unchecked(field) };
-                                // SAFETY:
-                                // 0. `ptr` addresses a subset of the bytes of
-                                //    `slf`, so by invariant on `slf: PtrInner`,
-                                //    if `ptr`'s referent is not zero sized,
-                                //    then `ptr` has valid provenance for its
-                                //    referent, which is entirely contained in
-                                //    some Rust allocation, `A`.
-                                // 1. By invariant on `slf: PtrInner`, if
-                                //    `ptr`'s referent is not zero sized, `A` is
-                                //    guaranteed to live for at least `'a`.
+                                /// SAFETY:
+                                /// 0. `ptr` addresses a subset of the bytes of
+                                ///    `slf`, so by invariant on `slf: PtrInner`,
+                                ///    if `ptr`'s referent is not zero sized,
+                                ///    then `ptr` has valid provenance for its
+                                ///    referent, which is entirely contained in
+                                ///    some Rust allocation, `A`.
+                                /// 1. By invariant on `slf: PtrInner`, if
+                                ///    `ptr`'s referent is not zero sized, `A` is
+                                ///    guaranteed to live for at least `'a`.
                                 unsafe { PtrInner::new(ptr) }
                             };
 
@@ -825,11 +825,11 @@ fn derive_try_from_bytes_union(
             let field_names = fields.iter().map(|(_vis, name, _ty)| name);
             let field_tys = fields.iter().map(|(_vis, _name, ty)| ty);
             quote!(
-                // SAFETY: We use `is_bit_valid` to validate that any field is
-                // bit-valid; we only return `true` if at least one of them is. The
-                // bit validity of a union is not yet well defined in Rust, but it
-                // is guaranteed to be no more strict than this definition. See #696
-                // for a more in-depth discussion.
+                /// SAFETY: We use `is_bit_valid` to validate that any field is
+                /// bit-valid; we only return `true` if at least one of them is. The
+                /// bit validity of a union is not yet well defined in Rust, but it
+                /// is guaranteed to be no more strict than this definition. See #696
+                /// for a more in-depth discussion.
                 fn is_bit_valid<___ZerocopyAliasing>(
                     mut candidate: #zerocopy_crate::Maybe<'_, Self,___ZerocopyAliasing>
                 ) -> #zerocopy_crate::util::macro_util::core_reexport::primitive::bool
@@ -840,35 +840,35 @@ fn derive_try_from_bytes_union(
                     use #zerocopy_crate::pointer::PtrInner;
 
                     false #(|| {
-                        // SAFETY:
-                        // - `project` is a field projection, and so it addresses a
-                        //   subset of the bytes addressed by `slf`
-                        // - ..., and so it preserves provenance
-                        // - Since `Self: Immutable` is enforced by
-                        //   `self_type_trait_bounds`, neither `*slf` nor the
-                        //   returned pointer's referent contain any `UnsafeCell`s
+                        /// SAFETY:
+                        /// - `project` is a field projection, and so it addresses a
+                        ///   subset of the bytes addressed by `slf`
+                        /// - ..., and so it preserves provenance
+                        /// - Since `Self: Immutable` is enforced by
+                        ///   `self_type_trait_bounds`, neither `*slf` nor the
+                        ///   returned pointer's referent contain any `UnsafeCell`s
                         let field_candidate = unsafe {
                             let project = |slf: PtrInner<'_, Self>| {
                                 let slf = slf.as_non_null().as_ptr();
                                 let field = core_reexport::ptr::addr_of_mut!((*slf).#field_names);
-                                // SAFETY: `cast_unsized_unchecked` promises that
-                                // `slf` will either reference a zero-sized byte
-                                // range, or else will reference a byte range that
-                                // is entirely contained within an allocated
-                                // object. In either case, this guarantees that
-                                // field projection will not wrap around the address
-                                // space, and so `field` will be non-null.
+                                /// SAFETY: `cast_unsized_unchecked` promises that
+                                /// `slf` will either reference a zero-sized byte
+                                /// range, or else will reference a byte range that
+                                /// is entirely contained within an allocated
+                                /// object. In either case, this guarantees that
+                                /// field projection will not wrap around the address
+                                /// space, and so `field` will be non-null.
                                 let ptr = unsafe { core_reexport::ptr::NonNull::new_unchecked(field) };
-                                // SAFETY:
-                                // 0. `ptr` addresses a subset of the bytes of
-                                //    `slf`, so by invariant on `slf: PtrInner`,
-                                //    if `ptr`'s referent is not zero sized,
-                                //    then `ptr` has valid provenance for its
-                                //    referent, which is entirely contained in
-                                //    some Rust allocation, `A`.
-                                // 1. By invariant on `slf: PtrInner`, if
-                                //    `ptr`'s referent is not zero sized, `A` is
-                                //    guaranteed to live for at least `'a`.
+                                /// SAFETY:
+                                /// 0. `ptr` addresses a subset of the bytes of
+                                ///    `slf`, so by invariant on `slf: PtrInner`,
+                                ///    if `ptr`'s referent is not zero sized,
+                                ///    then `ptr` has valid provenance for its
+                                ///    referent, which is entirely contained in
+                                ///    some Rust allocation, `A`.
+                                /// 1. By invariant on `slf: PtrInner`, if
+                                ///    `ptr`'s referent is not zero sized, `A` is
+                                ///    guaranteed to live for at least `'a`.
                                 unsafe { PtrInner::new(ptr) }
                             };
 
@@ -905,8 +905,8 @@ fn derive_try_from_bytes_enum(
     let trivial_is_bit_valid = try_gen_trivial_is_bit_valid(ast, top_level, zerocopy_crate);
     let extra = match (trivial_is_bit_valid, could_be_from_bytes) {
         (Some(is_bit_valid), _) => is_bit_valid,
-        // SAFETY: It would be sound for the enum to implement `FromBytes`, as
-        // required by `gen_trivial_is_bit_valid_unchecked`.
+        /// SAFETY: It would be sound for the enum to implement `FromBytes`, as
+        /// required by `gen_trivial_is_bit_valid_unchecked`.
         (None, true) => unsafe { gen_trivial_is_bit_valid_unchecked(zerocopy_crate) },
         (None, false) => {
             r#enum::derive_is_bit_valid(&ast.ident, &repr, &ast.generics, enm, zerocopy_crate)?
@@ -954,7 +954,7 @@ fn try_gen_trivial_is_bit_valid(
     // bulletproof.
     if top_level == Trait::FromBytes && ast.generics.params.is_empty() {
         Some(quote!(
-            // SAFETY: See inline.
+            /// SAFETY: See inline.
             fn is_bit_valid<___ZerocopyAliasing>(
                 _candidate: #zerocopy_crate::Maybe<Self, ___ZerocopyAliasing>,
             ) -> #zerocopy_crate::util::macro_util::core_reexport::primitive::bool
@@ -972,9 +972,9 @@ fn try_gen_trivial_is_bit_valid(
                     assert_is_from_bytes::<Self>();
                 }
 
-                // SAFETY: The preceding code only compiles if `Self:
-                // FromBytes`. Thus, this code only compiles if all initialized
-                // byte sequences represent valid instances of `Self`.
+                /// SAFETY: The preceding code only compiles if `Self:
+                /// FromBytes`. Thus, this code only compiles if all initialized
+                /// byte sequences represent valid instances of `Self`.
                 true
             }
         ))
@@ -996,8 +996,8 @@ fn try_gen_trivial_is_bit_valid(
 /// `Self`.
 unsafe fn gen_trivial_is_bit_valid_unchecked(zerocopy_crate: &Path) -> proc_macro2::TokenStream {
     quote!(
-        // SAFETY: The caller of `gen_trivial_is_bit_valid_unchecked` has
-        // promised that all initialized bit patterns are valid for `Self`.
+        /// SAFETY: The caller of `gen_trivial_is_bit_valid_unchecked` has
+        /// promised that all initialized bit patterns are valid for `Self`.
         fn is_bit_valid<___ZerocopyAliasing>(
             _candidate: #zerocopy_crate::Maybe<Self, ___ZerocopyAliasing>,
         ) -> #zerocopy_crate::util::macro_util::core_reexport::primitive::bool

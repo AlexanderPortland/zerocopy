@@ -212,7 +212,7 @@
 // `unknown_lints` is `warn` by default and we deny warnings in CI, so without
 // this attribute, any unknown lint would cause a CI failure when testing with
 // our MSRV.
-#![allow(unknown_lints, non_local_definitions, unreachable_patterns)]
+#![allow(unknown_lints, non_local_definitions, unreachable_patterns, unused_doc_comments)]
 #![deny(renamed_and_removed_lints)]
 #![deny(
     anonymous_parameters,
@@ -819,8 +819,8 @@ pub unsafe trait KnownLayout {
     #[inline(always)]
     fn size_of_val_raw(ptr: NonNull<Self>) -> Option<usize> {
         let meta = Self::pointer_to_metadata(ptr.as_ptr());
-        // SAFETY: `size_for_metadata` promises to only return `None` if the
-        // resulting size would not fit in a `usize`.
+        /// SAFETY: `size_for_metadata` promises to only return `None` if the
+        /// resulting size would not fit in a `usize`.
         Self::size_for_metadata(meta)
     }
 
@@ -949,7 +949,7 @@ impl PointerMetadata for usize {
     }
 }
 
-// SAFETY: Delegates safety to `DstLayout::for_slice`.
+/// SAFETY: Delegates safety to `DstLayout::for_slice`.
 unsafe impl<T> KnownLayout for [T] {
     #[allow(clippy::missing_inline_in_public_items, dead_code)]
     #[cfg_attr(
@@ -964,39 +964,39 @@ unsafe impl<T> KnownLayout for [T] {
 
     type PointerMetadata = usize;
 
-    // SAFETY: `CoreMaybeUninit<T>::LAYOUT` and `T::LAYOUT` are identical
-    // because `CoreMaybeUninit<T>` has the same size and alignment as `T` [1].
-    // Consequently, `[CoreMaybeUninit<T>]::LAYOUT` and `[T]::LAYOUT` are
-    // identical, because they both lack a fixed-sized prefix and because they
-    // inherit the alignments of their inner element type (which are identical)
-    // [2][3].
-    //
-    // `[CoreMaybeUninit<T>]` admits uninitialized bytes at all positions
-    // because `CoreMaybeUninit<T>` admits uninitialized bytes at all positions
-    // and because the inner elements of `[CoreMaybeUninit<T>]` are laid out
-    // back-to-back [2][3].
-    //
-    // [1] Per https://doc.rust-lang.org/1.81.0/std/mem/union.MaybeUninit.html#layout-1:
-    //
-    //   `MaybeUninit<T>` is guaranteed to have the same size, alignment, and ABI as
-    //   `T`
-    //
-    // [2] Per https://doc.rust-lang.org/1.82.0/reference/type-layout.html#slice-layout:
-    //
-    //   Slices have the same layout as the section of the array they slice.
-    //
-    // [3] Per https://doc.rust-lang.org/1.82.0/reference/type-layout.html#array-layout:
-    //
-    //   An array of `[T; N]` has a size of `size_of::<T>() * N` and the same
-    //   alignment of `T`. Arrays are laid out so that the zero-based `nth`
-    //   element of the array is offset from the start of the array by `n *
-    //   size_of::<T>()` bytes.
+    /// SAFETY: `CoreMaybeUninit<T>::LAYOUT` and `T::LAYOUT` are identical
+    /// because `CoreMaybeUninit<T>` has the same size and alignment as `T` [1].
+    /// Consequently, `[CoreMaybeUninit<T>]::LAYOUT` and `[T]::LAYOUT` are
+    /// identical, because they both lack a fixed-sized prefix and because they
+    /// inherit the alignments of their inner element type (which are identical)
+    /// [2][3].
+    ///
+    /// `[CoreMaybeUninit<T>]` admits uninitialized bytes at all positions
+    /// because `CoreMaybeUninit<T>` admits uninitialized bytes at all positions
+    /// and because the inner elements of `[CoreMaybeUninit<T>]` are laid out
+    /// back-to-back [2][3].
+    ///
+    /// [1] Per https://doc.rust-lang.org/1.81.0/std/mem/union.MaybeUninit.html#layout-1:
+    ///
+    ///   `MaybeUninit<T>` is guaranteed to have the same size, alignment, and ABI as
+    ///   `T`
+    ///
+    /// [2] Per https://doc.rust-lang.org/1.82.0/reference/type-layout.html#slice-layout:
+    ///
+    ///   Slices have the same layout as the section of the array they slice.
+    ///
+    /// [3] Per https://doc.rust-lang.org/1.82.0/reference/type-layout.html#array-layout:
+    ///
+    ///   An array of `[T; N]` has a size of `size_of::<T>() * N` and the same
+    ///   alignment of `T`. Arrays are laid out so that the zero-based `nth`
+    ///   element of the array is offset from the start of the array by `n *
+    ///   size_of::<T>()` bytes.
     type MaybeUninit = [CoreMaybeUninit<T>];
 
     const LAYOUT: DstLayout = DstLayout::for_slice::<T>();
 
-    // SAFETY: `.cast` preserves address and provenance. The returned pointer
-    // refers to an object with `elems` elements by construction.
+    /// SAFETY: `.cast` preserves address and provenance. The returned pointer
+    /// refers to an object with `elems` elements by construction.
     #[inline(always)]
     fn raw_from_ptr_len(data: NonNull<u8>, elems: usize) -> NonNull<Self> {
         // FIXME(#67): Remove this allow. See NonNullExt for more details.
@@ -1009,12 +1009,12 @@ unsafe impl<T> KnownLayout for [T] {
         #[allow(clippy::as_conversions)]
         let slc = ptr as *const [()];
 
-        // SAFETY:
-        // - `()` has alignment 1, so `slc` is trivially aligned.
-        // - `slc` was derived from a non-null pointer.
-        // - The size is 0 regardless of the length, so it is sound to
-        //   materialize a reference regardless of location.
-        // - By invariant, `self.ptr` has valid provenance.
+        /// SAFETY:
+        /// - `()` has alignment 1, so `slc` is trivially aligned.
+        /// - `slc` was derived from a non-null pointer.
+        /// - The size is 0 regardless of the length, so it is sound to
+        ///   materialize a reference regardless of location.
+        /// - By invariant, `self.ptr` has valid provenance.
         let slc = unsafe { &*slc };
 
         // This is correct because the preceding `as` cast preserves the number
@@ -1061,22 +1061,22 @@ impl_known_layout!(
 );
 impl_known_layout!(const N: usize, T => [T; N]);
 
-// SAFETY: `str` has the same representation as `[u8]`. `ManuallyDrop<T>` [1],
-// `UnsafeCell<T>` [2], and `Cell<T>` [3] have the same representation as `T`.
-//
-// [1] Per https://doc.rust-lang.org/1.85.0/std/mem/struct.ManuallyDrop.html:
-//
-//   `ManuallyDrop<T>` is guaranteed to have the same layout and bit validity as
-//   `T`
-//
-// [2] Per https://doc.rust-lang.org/1.85.0/core/cell/struct.UnsafeCell.html#memory-layout:
-//
-//   `UnsafeCell<T>` has the same in-memory representation as its inner type
-//   `T`.
-//
-// [3] Per https://doc.rust-lang.org/1.85.0/core/cell/struct.Cell.html#memory-layout:
-//
-//   `Cell<T>` has the same in-memory representation as `T`.
+/// SAFETY: `str` has the same representation as `[u8]`. `ManuallyDrop<T>` [1],
+/// `UnsafeCell<T>` [2], and `Cell<T>` [3] have the same representation as `T`.
+///
+/// [1] Per https://doc.rust-lang.org/1.85.0/std/mem/struct.ManuallyDrop.html:
+///
+///   `ManuallyDrop<T>` is guaranteed to have the same layout and bit validity as
+///   `T`
+///
+/// [2] Per https://doc.rust-lang.org/1.85.0/core/cell/struct.UnsafeCell.html#memory-layout:
+///
+///   `UnsafeCell<T>` has the same in-memory representation as its inner type
+///   `T`.
+///
+/// [3] Per https://doc.rust-lang.org/1.85.0/core/cell/struct.Cell.html#memory-layout:
+///
+///   `Cell<T>` has the same in-memory representation as `T`.
 const _: () = unsafe {
     unsafe_impl_known_layout!(
         #[repr([u8])]
@@ -1087,16 +1087,16 @@ const _: () = unsafe {
     unsafe_impl_known_layout!(T: ?Sized + KnownLayout => #[repr(T)] Cell<T>);
 };
 
-// SAFETY:
-// - By consequence of the invariant on `T::MaybeUninit` that `T::LAYOUT` and
-//   `T::MaybeUninit::LAYOUT` are equal, `T` and `T::MaybeUninit` have the same:
-//   - Fixed prefix size
-//   - Alignment
-//   - (For DSTs) trailing slice element size
-// - By consequence of the above, referents `T::MaybeUninit` and `T` have the
-//   require the same kind of pointer metadata, and thus it is valid to perform
-//   an `as` cast from `*mut T` and `*mut T::MaybeUninit`, and this operation
-//   preserves referent size (ie, `size_of_val_raw`).
+/// SAFETY:
+/// - By consequence of the invariant on `T::MaybeUninit` that `T::LAYOUT` and
+///   `T::MaybeUninit::LAYOUT` are equal, `T` and `T::MaybeUninit` have the same:
+///   - Fixed prefix size
+///   - Alignment
+///   - (For DSTs) trailing slice element size
+/// - By consequence of the above, referents `T::MaybeUninit` and `T` have the
+///   require the same kind of pointer metadata, and thus it is valid to perform
+///   an `as` cast from `*mut T` and `*mut T::MaybeUninit`, and this operation
+///   preserves referent size (ie, `size_of_val_raw`).
 const _: () = unsafe {
     unsafe_impl_known_layout!(T: ?Sized + KnownLayout => #[repr(T::MaybeUninit)] MaybeUninit<T>)
 };
@@ -2725,9 +2725,11 @@ pub unsafe trait TryFromBytes {
                 return Err(TryReadError::Size(e.with_dst()));
             }
         };
-        // SAFETY: `candidate` was copied from from `source: &[u8]`, so all of
-        // its bytes are initialized.
-        unsafe { try_read_from(source, candidate) }
+        /// SAFETY: `candidate` was copied from from `source: &[u8]`, so all of
+        /// its bytes are initialized.
+        unsafe {
+            try_read_from(source, candidate)
+        }
     }
 
     /// Attempts to read a `Self` from the prefix of the given `source`.
@@ -2786,9 +2788,11 @@ pub unsafe trait TryFromBytes {
                 return Err(TryReadError::Size(e.with_dst()));
             }
         };
-        // SAFETY: `candidate` was copied from from `source: &[u8]`, so all of
-        // its bytes are initialized.
-        unsafe { try_read_from(source, candidate).map(|slf| (slf, suffix)) }
+        /// SAFETY: `candidate` was copied from from `source: &[u8]`, so all of
+        /// its bytes are initialized.
+        unsafe {
+            try_read_from(source, candidate).map(|slf| (slf, suffix))
+        }
     }
 
     /// Attempts to read a `Self` from the suffix of the given `source`.
@@ -2848,9 +2852,11 @@ pub unsafe trait TryFromBytes {
                 return Err(TryReadError::Size(e.with_dst()));
             }
         };
-        // SAFETY: `candidate` was copied from from `source: &[u8]`, so all of
-        // its bytes are initialized.
-        unsafe { try_read_from(source, candidate).map(|slf| (prefix, slf)) }
+        /// SAFETY: `candidate` was copied from from `source: &[u8]`, so all of
+        /// its bytes are initialized.
+        unsafe {
+            try_read_from(source, candidate).map(|slf| (prefix, slf))
+        }
     }
 }
 
@@ -2920,13 +2926,13 @@ unsafe fn try_read_from<S, T: TryFromBytes>(
     // We use `from_mut` despite not mutating via `c_ptr` so that we don't need
     // to add a `T: Immutable` bound.
     let c_ptr = Ptr::from_mut(&mut candidate);
-    // SAFETY: `c_ptr` has no uninitialized sub-ranges because it derived from
-    // `candidate`, which the caller promises is entirely initialized. Since
-    // `candidate` is a `MaybeUninit`, it has no validity requirements, and so
-    // no values written to an `Initialized` `c_ptr` can violate its validity.
-    // Since `c_ptr` has `Exclusive` aliasing, no mutations may happen except
-    // via `c_ptr` so long as it is live, so we don't need to worry about the
-    // fact that `c_ptr` may have more restricted validity than `candidate`.
+    /// SAFETY: `c_ptr` has no uninitialized sub-ranges because it derived from
+    /// `candidate`, which the caller promises is entirely initialized. Since
+    /// `candidate` is a `MaybeUninit`, it has no validity requirements, and so
+    /// no values written to an `Initialized` `c_ptr` can violate its validity.
+    /// Since `c_ptr` has `Exclusive` aliasing, no mutations may happen except
+    /// via `c_ptr` so long as it is live, so we don't need to worry about the
+    /// fact that `c_ptr` may have more restricted validity than `candidate`.
     let c_ptr = unsafe { c_ptr.assume_validity::<invariant::Initialized>() };
     let c_ptr = c_ptr.transmute();
 
@@ -2954,9 +2960,9 @@ unsafe fn try_read_from<S, T: TryFromBytes>(
 
     _assert_same_size_and_validity::<T>();
 
-    // SAFETY: We just validated that `candidate` contains a valid
-    // `Wrapping<T>`, which has the same size and bit validity as `T`, as
-    // guaranteed by the preceding type assertion.
+    /// SAFETY: We just validated that `candidate` contains a valid
+    /// `Wrapping<T>`, which has the same size and bit validity as `T`, as
+    /// guaranteed by the preceding type assertion.
     Ok(unsafe { candidate.assume_init() })
 }
 
@@ -3087,16 +3093,18 @@ pub unsafe trait FromZeros: TryFromBytes {
     fn zero(&mut self) {
         let slf: *mut Self = self;
         let len = mem::size_of_val(self);
-        // SAFETY:
-        // - `self` is guaranteed by the type system to be valid for writes of
-        //   size `size_of_val(self)`.
-        // - `u8`'s alignment is 1, and thus `self` is guaranteed to be aligned
-        //   as required by `u8`.
-        // - Since `Self: FromZeros`, the all-zeros instance is a valid instance
-        //   of `Self.`
-        //
-        // FIXME(#429): Add references to docs and quotes.
-        unsafe { ptr::write_bytes(slf.cast::<u8>(), 0, len) };
+        /// SAFETY:
+        /// - `self` is guaranteed by the type system to be valid for writes of
+        ///   size `size_of_val(self)`.
+        /// - `u8`'s alignment is 1, and thus `self` is guaranteed to be aligned
+        ///   as required by `u8`.
+        /// - Since `Self: FromZeros`, the all-zeros instance is a valid instance
+        ///   of `Self.`
+        ///
+        /// FIXME(#429): Add references to docs and quotes.
+        unsafe {
+            ptr::write_bytes(slf.cast::<u8>(), 0, len)
+        };
     }
 
     /// Creates an instance of `Self` from zeroed bytes.
@@ -3129,8 +3137,10 @@ pub unsafe trait FromZeros: TryFromBytes {
     where
         Self: Sized,
     {
-        // SAFETY: `FromZeros` says that the all-zeros bit pattern is legal.
-        unsafe { mem::zeroed() }
+        /// SAFETY: `FromZeros` says that the all-zeros bit pattern is legal.
+        unsafe {
+            mem::zeroed()
+        }
     }
 
     /// Creates a `Box<Self>` from zeroed bytes.
@@ -3166,19 +3176,19 @@ pub unsafe trait FromZeros: TryFromBytes {
             // allocated for `Self` even on lower opt-levels where this branch
             // might not get optimized out.
 
-            // SAFETY: Per [1], when `T` is a ZST, `Box<T>`'s only validity
-            // requirements are that the pointer is non-null and sufficiently
-            // aligned. Per [2], `NonNull::dangling` produces a pointer which
-            // is sufficiently aligned. Since the produced pointer is a
-            // `NonNull`, it is non-null.
-            //
-            // [1] Per https://doc.rust-lang.org/nightly/std/boxed/index.html#memory-layout:
-            //
-            //   For zero-sized values, the `Box` pointer has to be non-null and sufficiently aligned.
-            //
-            // [2] Per https://doc.rust-lang.org/std/ptr/struct.NonNull.html#method.dangling:
-            //
-            //   Creates a new `NonNull` that is dangling, but well-aligned.
+            /// SAFETY: Per [1], when `T` is a ZST, `Box<T>`'s only validity
+            /// requirements are that the pointer is non-null and sufficiently
+            /// aligned. Per [2], `NonNull::dangling` produces a pointer which
+            /// is sufficiently aligned. Since the produced pointer is a
+            /// `NonNull`, it is non-null.
+            ///
+            /// [1] Per https://doc.rust-lang.org/nightly/std/boxed/index.html#memory-layout:
+            ///
+            ///   For zero-sized values, the `Box` pointer has to be non-null and sufficiently aligned.
+            ///
+            /// [2] Per https://doc.rust-lang.org/std/ptr/struct.NonNull.html#method.dangling:
+            ///
+            ///   Creates a new `NonNull` that is dangling, but well-aligned.
             return Ok(unsafe { Box::from_raw(NonNull::dangling().as_ptr()) });
         }
 
@@ -3222,11 +3232,13 @@ pub unsafe trait FromZeros: TryFromBytes {
     where
         Self: KnownLayout<PointerMetadata = usize>,
     {
-        // SAFETY: `alloc::alloc::alloc_zeroed` is a valid argument of
-        // `new_box`. The referent of the pointer returned by `alloc_zeroed`
-        // (and, consequently, the `Box` derived from it) is a valid instance of
-        // `Self`, because `Self` is `FromZeros`.
-        unsafe { crate::util::new_box(count, alloc::alloc::alloc_zeroed) }
+        /// SAFETY: `alloc::alloc::alloc_zeroed` is a valid argument of
+        /// `new_box`. The referent of the pointer returned by `alloc_zeroed`
+        /// (and, consequently, the `Box` derived from it) is a valid instance of
+        /// `Self`, because `Self` is `FromZeros`.
+        unsafe {
+            crate::util::new_box(count, alloc::alloc::alloc_zeroed)
+        }
     }
 
     #[deprecated(since = "0.8.0", note = "renamed to `FromZeros::new_box_zeroed_with_elems`")]
@@ -3310,13 +3322,13 @@ pub unsafe trait FromZeros: TryFromBytes {
         // We only conditionally compile on versions on which `try_reserve` is
         // stable; the Clippy lint is a false positive.
         v.try_reserve(additional).map_err(|_| AllocError)?;
-        // SAFETY: The `try_reserve` call guarantees that these cannot overflow:
-        // * `ptr.add(position)`
-        // * `position + additional`
-        // * `v.len() + additional`
-        //
-        // `v.len() - position` cannot overflow because we asserted that
-        // `position <= v.len()`.
+        /// SAFETY: The `try_reserve` call guarantees that these cannot overflow:
+        /// * `ptr.add(position)`
+        /// * `position + additional`
+        /// * `v.len() + additional`
+        ///
+        /// `v.len() - position` cannot overflow because we asserted that
+        /// `position <= v.len()`.
         unsafe {
             // This is a potentially overlapping copy.
             let ptr = v.as_mut_ptr();
@@ -4549,10 +4561,12 @@ pub unsafe trait FromBytes: FromZeros {
             Ok(r) => Ok(Ref::read(&r).into_inner()),
             Err(CastError::Size(e)) => Err(e.with_dst()),
             Err(CastError::Alignment(_)) => {
-                // SAFETY: `Unalign<Self>` is trivially aligned, so
-                // `Ref::sized_from` cannot fail due to unmet alignment
-                // requirements.
-                unsafe { core::hint::unreachable_unchecked() }
+                /// SAFETY: `Unalign<Self>` is trivially aligned, so
+                /// `Ref::sized_from` cannot fail due to unmet alignment
+                /// requirements.
+                unsafe {
+                    core::hint::unreachable_unchecked()
+                }
             }
             Err(CastError::Validity(i)) => match i {},
         }
@@ -4600,10 +4614,12 @@ pub unsafe trait FromBytes: FromZeros {
             Ok((r, suffix)) => Ok((Ref::read(&r).into_inner(), suffix)),
             Err(CastError::Size(e)) => Err(e.with_dst()),
             Err(CastError::Alignment(_)) => {
-                // SAFETY: `Unalign<Self>` is trivially aligned, so
-                // `Ref::sized_from_prefix` cannot fail due to unmet alignment
-                // requirements.
-                unsafe { core::hint::unreachable_unchecked() }
+                /// SAFETY: `Unalign<Self>` is trivially aligned, so
+                /// `Ref::sized_from_prefix` cannot fail due to unmet alignment
+                /// requirements.
+                unsafe {
+                    core::hint::unreachable_unchecked()
+                }
             }
             Err(CastError::Validity(i)) => match i {},
         }
@@ -4645,10 +4661,12 @@ pub unsafe trait FromBytes: FromZeros {
             Ok((prefix, r)) => Ok((prefix, Ref::read(&r).into_inner())),
             Err(CastError::Size(e)) => Err(e.with_dst()),
             Err(CastError::Alignment(_)) => {
-                // SAFETY: `Unalign<Self>` is trivially aligned, so
-                // `Ref::sized_from_suffix` cannot fail due to unmet alignment
-                // requirements.
-                unsafe { core::hint::unreachable_unchecked() }
+                /// SAFETY: `Unalign<Self>` is trivially aligned, so
+                /// `Ref::sized_from_suffix` cannot fail due to unmet alignment
+                /// requirements.
+                unsafe {
+                    core::hint::unreachable_unchecked()
+                }
             }
             Err(CastError::Validity(i)) => match i {},
         }
@@ -4694,18 +4712,18 @@ pub unsafe trait FromBytes: FromZeros {
         buf.zero();
 
         let ptr = Ptr::from_mut(&mut buf);
-        // SAFETY: After `buf.zero()`, `buf` consists entirely of initialized,
-        // zeroed bytes. Since `MaybeUninit` has no validity requirements, `ptr`
-        // cannot be used to write values which will violate `buf`'s bit
-        // validity. Since `ptr` has `Exclusive` aliasing, nothing other than
-        // `ptr` may be used to mutate `ptr`'s referent, and so its bit validity
-        // cannot be violated even though `buf` may have more permissive bit
-        // validity than `ptr`.
+        /// SAFETY: After `buf.zero()`, `buf` consists entirely of initialized,
+        /// zeroed bytes. Since `MaybeUninit` has no validity requirements, `ptr`
+        /// cannot be used to write values which will violate `buf`'s bit
+        /// validity. Since `ptr` has `Exclusive` aliasing, nothing other than
+        /// `ptr` may be used to mutate `ptr`'s referent, and so its bit validity
+        /// cannot be violated even though `buf` may have more permissive bit
+        /// validity than `ptr`.
         let ptr = unsafe { ptr.assume_validity::<invariant::Initialized>() };
         let ptr = ptr.as_bytes::<BecauseExclusive>();
         src.read_exact(ptr.as_mut())?;
-        // SAFETY: `buf` entirely consists of initialized bytes, and `Self` is
-        // `FromBytes`.
+        /// SAFETY: `buf` entirely consists of initialized bytes, and `Self` is
+        /// `FromBytes`.
         Ok(unsafe { buf.assume_init() })
     }
 
@@ -5057,29 +5075,31 @@ pub unsafe trait IntoBytes {
         let len = mem::size_of_val(self);
         let slf: *const Self = self;
 
-        // SAFETY:
-        // - `slf.cast::<u8>()` is valid for reads for `len * size_of::<u8>()`
-        //   many bytes because...
-        //   - `slf` is the same pointer as `self`, and `self` is a reference
-        //     which points to an object whose size is `len`. Thus...
-        //     - The entire region of `len` bytes starting at `slf` is contained
-        //       within a single allocation.
-        //     - `slf` is non-null.
-        //   - `slf` is trivially aligned to `align_of::<u8>() == 1`.
-        // - `Self: IntoBytes` ensures that all of the bytes of `slf` are
-        //   initialized.
-        // - Since `slf` is derived from `self`, and `self` is an immutable
-        //   reference, the only other references to this memory region that
-        //   could exist are other immutable references, and those don't allow
-        //   mutation. `Self: Immutable` prohibits types which contain
-        //   `UnsafeCell`s, which are the only types for which this rule
-        //   wouldn't be sufficient.
-        // - The total size of the resulting slice is no larger than
-        //   `isize::MAX` because no allocation produced by safe code can be
-        //   larger than `isize::MAX`.
-        //
-        // FIXME(#429): Add references to docs and quotes.
-        unsafe { slice::from_raw_parts(slf.cast::<u8>(), len) }
+        /// SAFETY:
+        /// - `slf.cast::<u8>()` is valid for reads for `len * size_of::<u8>()`
+        ///   many bytes because...
+        ///   - `slf` is the same pointer as `self`, and `self` is a reference
+        ///     which points to an object whose size is `len`. Thus...
+        ///     - The entire region of `len` bytes starting at `slf` is contained
+        ///       within a single allocation.
+        ///     - `slf` is non-null.
+        ///   - `slf` is trivially aligned to `align_of::<u8>() == 1`.
+        /// - `Self: IntoBytes` ensures that all of the bytes of `slf` are
+        ///   initialized.
+        /// - Since `slf` is derived from `self`, and `self` is an immutable
+        ///   reference, the only other references to this memory region that
+        ///   could exist are other immutable references, and those don't allow
+        ///   mutation. `Self: Immutable` prohibits types which contain
+        ///   `UnsafeCell`s, which are the only types for which this rule
+        ///   wouldn't be sufficient.
+        /// - The total size of the resulting slice is no larger than
+        ///   `isize::MAX` because no allocation produced by safe code can be
+        ///   larger than `isize::MAX`.
+        ///
+        /// FIXME(#429): Add references to docs and quotes.
+        unsafe {
+            slice::from_raw_parts(slf.cast::<u8>(), len)
+        }
     }
 
     /// Gets the bytes of this value mutably.
@@ -5131,27 +5151,29 @@ pub unsafe trait IntoBytes {
         let len = mem::size_of_val(self);
         let slf: *mut Self = self;
 
-        // SAFETY:
-        // - `slf.cast::<u8>()` is valid for reads and writes for `len *
-        //   size_of::<u8>()` many bytes because...
-        //   - `slf` is the same pointer as `self`, and `self` is a reference
-        //     which points to an object whose size is `len`. Thus...
-        //     - The entire region of `len` bytes starting at `slf` is contained
-        //       within a single allocation.
-        //     - `slf` is non-null.
-        //   - `slf` is trivially aligned to `align_of::<u8>() == 1`.
-        // - `Self: IntoBytes` ensures that all of the bytes of `slf` are
-        //   initialized.
-        // - `Self: FromBytes` ensures that no write to this memory region
-        //   could result in it containing an invalid `Self`.
-        // - Since `slf` is derived from `self`, and `self` is a mutable
-        //   reference, no other references to this memory region can exist.
-        // - The total size of the resulting slice is no larger than
-        //   `isize::MAX` because no allocation produced by safe code can be
-        //   larger than `isize::MAX`.
-        //
-        // FIXME(#429): Add references to docs and quotes.
-        unsafe { slice::from_raw_parts_mut(slf.cast::<u8>(), len) }
+        /// SAFETY:
+        /// - `slf.cast::<u8>()` is valid for reads and writes for `len *
+        ///   size_of::<u8>()` many bytes because...
+        ///   - `slf` is the same pointer as `self`, and `self` is a reference
+        ///     which points to an object whose size is `len`. Thus...
+        ///     - The entire region of `len` bytes starting at `slf` is contained
+        ///       within a single allocation.
+        ///     - `slf` is non-null.
+        ///   - `slf` is trivially aligned to `align_of::<u8>() == 1`.
+        /// - `Self: IntoBytes` ensures that all of the bytes of `slf` are
+        ///   initialized.
+        /// - `Self: FromBytes` ensures that no write to this memory region
+        ///   could result in it containing an invalid `Self`.
+        /// - Since `slf` is derived from `self`, and `self` is a mutable
+        ///   reference, no other references to this memory region can exist.
+        /// - The total size of the resulting slice is no larger than
+        ///   `isize::MAX` because no allocation produced by safe code can be
+        ///   larger than `isize::MAX`.
+        ///
+        /// FIXME(#429): Add references to docs and quotes.
+        unsafe {
+            slice::from_raw_parts_mut(slf.cast::<u8>(), len)
+        }
     }
 
     /// Writes a copy of `self` to `dst`.
@@ -5209,11 +5231,13 @@ pub unsafe trait IntoBytes {
     {
         let src = self.as_bytes();
         if dst.len() == src.len() {
-            // SAFETY: Within this branch of the conditional, we have ensured
-            // that `dst.len()` is equal to `src.len()`. Neither the size of the
-            // source nor the size of the destination change between the above
-            // size check and the invocation of `copy_unchecked`.
-            unsafe { util::copy_unchecked(src, dst) }
+            /// SAFETY: Within this branch of the conditional, we have ensured
+            /// that `dst.len()` is equal to `src.len()`. Neither the size of the
+            /// source nor the size of the destination change between the above
+            /// size check and the invocation of `copy_unchecked`.
+            unsafe {
+                util::copy_unchecked(src, dst)
+            }
             Ok(())
         } else {
             Err(SizeError::new(self))
@@ -5277,12 +5301,14 @@ pub unsafe trait IntoBytes {
         let src = self.as_bytes();
         match dst.get_mut(..src.len()) {
             Some(dst) => {
-                // SAFETY: Within this branch of the `match`, we have ensured
-                // through fallible subslicing that `dst.len()` is equal to
-                // `src.len()`. Neither the size of the source nor the size of
-                // the destination change between the above subslicing operation
-                // and the invocation of `copy_unchecked`.
-                unsafe { util::copy_unchecked(src, dst) }
+                /// SAFETY: Within this branch of the `match`, we have ensured
+                /// through fallible subslicing that `dst.len()` is equal to
+                /// `src.len()`. Neither the size of the source nor the size of
+                /// the destination change between the above subslicing operation
+                /// and the invocation of `copy_unchecked`.
+                unsafe {
+                    util::copy_unchecked(src, dst)
+                }
                 Ok(())
             }
             None => Err(SizeError::new(self)),
@@ -5365,10 +5391,10 @@ pub unsafe trait IntoBytes {
             // than panicking.
             return Err(SizeError::new(self));
         };
-        // SAFETY: Through fallible subslicing of `dst`, we have ensured that
-        // `dst.len()` is equal to `src.len()`. Neither the size of the source
-        // nor the size of the destination change between the above subslicing
-        // operation and the invocation of `copy_unchecked`.
+        /// SAFETY: Through fallible subslicing of `dst`, we have ensured that
+        /// `dst.len()` is equal to `src.len()`. Neither the size of the source
+        /// nor the size of the destination change between the above subslicing
+        /// operation and the invocation of `copy_unchecked`.
         unsafe {
             util::copy_unchecked(src, dst);
         }
@@ -5727,14 +5753,16 @@ mod tests {
 
     impl Unsized {
         fn from_mut_slice(slc: &mut [u8]) -> &mut Unsized {
-            // SAFETY: This *probably* sound - since the layouts of `[u8]` and
-            // `Unsized` are the same, so are the layouts of `&mut [u8]` and
-            // `&mut Unsized`. [1] Even if it turns out that this isn't actually
-            // guaranteed by the language spec, we can just change this since
-            // it's in test code.
-            //
-            // [1] https://github.com/rust-lang/unsafe-code-guidelines/issues/375
-            unsafe { mem::transmute(slc) }
+            /// SAFETY: This *probably* sound - since the layouts of `[u8]` and
+            /// `Unsized` are the same, so are the layouts of `&mut [u8]` and
+            /// `&mut Unsized`. [1] Even if it turns out that this isn't actually
+            /// guaranteed by the language spec, we can just change this since
+            /// it's in test code.
+            ///
+            /// [1] https://github.com/rust-lang/unsafe-code-guidelines/issues/375
+            unsafe {
+                mem::transmute(slc)
+            }
         }
     }
 

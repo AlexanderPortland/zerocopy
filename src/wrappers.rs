@@ -119,15 +119,15 @@ pub struct Unalign<T>(T);
 // `KnownLayout` impl bounded on `T: KnownLayout.` This is overly restrictive.
 impl_known_layout!(T => Unalign<T>);
 
-// SAFETY:
-// - `Unalign<T>` promises to have alignment 1, and so we don't require that `T:
-//   Unaligned`.
-// - `Unalign<T>` has the same bit validity as `T`, and so it is `FromZeros`,
-//   `FromBytes`, or `IntoBytes` exactly when `T` is as well.
-// - `Immutable`: `Unalign<T>` has the same fields as `T`, so it contains
-//   `UnsafeCell`s exactly when `T` does.
-// - `TryFromBytes`: `Unalign<T>` has the same the same bit validity as `T`, so
-//   `T::is_bit_valid` is a sound implementation of `is_bit_valid`.
+/// SAFETY:
+/// - `Unalign<T>` promises to have alignment 1, and so we don't require that `T:
+///   Unaligned`.
+/// - `Unalign<T>` has the same bit validity as `T`, and so it is `FromZeros`,
+///   `FromBytes`, or `IntoBytes` exactly when `T` is as well.
+/// - `Immutable`: `Unalign<T>` has the same fields as `T`, so it contains
+///   `UnsafeCell`s exactly when `T` does.
+/// - `TryFromBytes`: `Unalign<T>` has the same the same bit validity as `T`, so
+///   `T::is_bit_valid` is a sound implementation of `is_bit_valid`.
 #[allow(unused_unsafe)] // Unused when `feature = "derive"`.
 const _: () = unsafe {
     impl_or_verify!(T => Unaligned for Unalign<T>);
@@ -161,15 +161,15 @@ impl<T> Unalign<T> {
     /// Consumes `self`, returning the inner `T`.
     #[inline(always)]
     pub const fn into_inner(self) -> T {
-        // SAFETY: Since `Unalign` is `#[repr(C, packed)]`, it has the same size
-        // and bit validity as `T`.
-        //
-        // We do this instead of just destructuring in order to prevent
-        // `Unalign`'s `Drop::drop` from being run, since dropping is not
-        // supported in `const fn`s.
-        //
-        // FIXME(https://github.com/rust-lang/rust/issues/73255): Destructure
-        // instead of using unsafe.
+        /// SAFETY: Since `Unalign` is `#[repr(C, packed)]`, it has the same size
+        /// and bit validity as `T`.
+        ///
+        /// We do this instead of just destructuring in order to prevent
+        /// `Unalign`'s `Drop::drop` from being run, since dropping is not
+        /// supported in `const fn`s.
+        ///
+        /// FIXME(https://github.com/rust-lang/rust/issues/73255): Destructure
+        /// instead of using unsafe.
         unsafe { crate::util::transmute_unchecked(self) }
     }
 
@@ -217,15 +217,15 @@ impl<T> Unalign<T> {
     /// The caller must guarantee that `self` satisfies `align_of::<T>()`.
     #[inline(always)]
     pub const unsafe fn deref_unchecked(&self) -> &T {
-        // SAFETY: `Unalign<T>` is `repr(transparent)`, so there is a valid `T`
-        // at the same memory location as `self`. It has no alignment guarantee,
-        // but the caller has promised that `self` is properly aligned, so we
-        // know that it is sound to create a reference to `T` at this memory
-        // location.
-        //
-        // We use `mem::transmute` instead of `&*self.get_ptr()` because
-        // dereferencing pointers is not stable in `const` on our current MSRV
-        // (1.56 as of this writing).
+        /// SAFETY: `Unalign<T>` is `repr(transparent)`, so there is a valid `T`
+        /// at the same memory location as `self`. It has no alignment guarantee,
+        /// but the caller has promised that `self` is properly aligned, so we
+        /// know that it is sound to create a reference to `T` at this memory
+        /// location.
+        ///
+        /// We use `mem::transmute` instead of `&*self.get_ptr()` because
+        /// dereferencing pointers is not stable in `const` on our current MSRV
+        /// (1.56 as of this writing).
         unsafe { mem::transmute(self) }
     }
 
@@ -240,11 +240,11 @@ impl<T> Unalign<T> {
     /// The caller must guarantee that `self` satisfies `align_of::<T>()`.
     #[inline(always)]
     pub unsafe fn deref_mut_unchecked(&mut self) -> &mut T {
-        // SAFETY: `self.get_mut_ptr()` returns a raw pointer to a valid `T` at
-        // the same memory location as `self`. It has no alignment guarantee,
-        // but the caller has promised that `self` is properly aligned, so we
-        // know that the pointer itself is aligned, and thus that it is sound to
-        // create a reference to a `T` at this memory location.
+        /// SAFETY: `self.get_mut_ptr()` returns a raw pointer to a valid `T` at
+        /// the same memory location as `self`. It has no alignment guarantee,
+        /// but the caller has promised that `self` is properly aligned, so we
+        /// know that the pointer itself is aligned, and thus that it is sound to
+        /// create a reference to a `T` at this memory location.
         unsafe { &mut *self.get_mut_ptr() }
     }
 
@@ -326,8 +326,8 @@ impl<T> Unalign<T> {
             // guarantee this in the general case. Thus, this optimization may
             // sometimes be helpful.
 
-            // SAFETY: Since `T`'s alignment is 1, `self` satisfies its
-            // alignment by definition.
+            /// SAFETY: Since `T`'s alignment is 1, `self` satisfies its
+            /// alignment by definition.
             let t = unsafe { self.deref_mut_unchecked() };
             return f(t);
         }
@@ -341,29 +341,29 @@ impl<T> Unalign<T> {
 
         impl<T> Drop for WriteBackOnDrop<T> {
             fn drop(&mut self) {
-                // SAFETY: We never use `copy` again as required by
-                // `ManuallyDrop::take`.
+                /// SAFETY: We never use `copy` again as required by
+                /// `ManuallyDrop::take`.
                 let copy = unsafe { ManuallyDrop::take(&mut self.copy) };
-                // SAFETY: `slf` is the raw pointer value of `self`. We know it
-                // is valid for writes and properly aligned because `self` is a
-                // mutable reference, which guarantees both of these properties.
+                /// SAFETY: `slf` is the raw pointer value of `self`. We know it
+                /// is valid for writes and properly aligned because `self` is a
+                /// mutable reference, which guarantees both of these properties.
                 unsafe { ptr::write(self.slf, Unalign::new(copy)) };
             }
         }
 
-        // SAFETY: We know that `self` is valid for reads, properly aligned, and
-        // points to an initialized `Unalign<T>` because it is a mutable
-        // reference, which guarantees all of these properties.
-        //
-        // Since `T: !Copy`, it would be unsound in the general case to allow
-        // both the original `Unalign<T>` and the copy to be used by safe code.
-        // We guarantee that the copy is used to overwrite the original in the
-        // `Drop::drop` impl of `WriteBackOnDrop`. So long as this `drop` is
-        // called before any other safe code executes, soundness is upheld.
-        // While this method can terminate in two ways (by returning normally or
-        // by unwinding due to a panic in `f`), in both cases, `write_back` is
-        // dropped - and its `drop` called - before any other safe code can
-        // execute.
+        /// SAFETY: We know that `self` is valid for reads, properly aligned, and
+        /// points to an initialized `Unalign<T>` because it is a mutable
+        /// reference, which guarantees all of these properties.
+        ///
+        /// Since `T: !Copy`, it would be unsound in the general case to allow
+        /// both the original `Unalign<T>` and the copy to be used by safe code.
+        /// We guarantee that the copy is used to overwrite the original in the
+        /// `Drop::drop` impl of `WriteBackOnDrop`. So long as this `drop` is
+        /// called before any other safe code executes, soundness is upheld.
+        /// While this method can terminate in two ways (by returning normally or
+        /// by unwinding due to a panic in `f`), in both cases, `write_back` is
+        /// dropped - and its `drop` called - before any other safe code can
+        /// execute.
         let copy = unsafe { ptr::read(self) }.into_inner();
         let mut write_back = WriteBackOnDrop { copy: ManuallyDrop::new(copy), slf: self };
 
@@ -470,13 +470,13 @@ impl<T: Unaligned + Display> Display for Unalign<T> {
 #[repr(transparent)]
 #[doc(hidden)]
 pub struct MaybeUninit<T: ?Sized + KnownLayout>(
-    // SAFETY: `MaybeUninit<T>` has the same size as `T`, because (by invariant
-    // on `T::MaybeUninit`) `T::MaybeUninit` has `T::LAYOUT` identical to `T`,
-    // and because (invariant on `T::LAYOUT`) we can trust that `LAYOUT`
-    // accurately reflects the layout of `T`. By invariant on `T::MaybeUninit`,
-    // it admits uninitialized bytes in all positions. Because `MaybeUninit` is
-    // marked `repr(transparent)`, these properties additionally hold true for
-    // `Self`.
+    /// SAFETY: `MaybeUninit<T>` has the same size as `T`, because (by invariant
+    /// on `T::MaybeUninit`) `T::MaybeUninit` has `T::LAYOUT` identical to `T`,
+    /// and because (invariant on `T::LAYOUT`) we can trust that `LAYOUT`
+    /// accurately reflects the layout of `T`. By invariant on `T::MaybeUninit`,
+    /// it admits uninitialized bytes in all positions. Because `MaybeUninit` is
+    /// marked `repr(transparent)`, these properties additionally hold true for
+    /// `Self`.
     T::MaybeUninit,
 );
 
@@ -489,22 +489,22 @@ impl<T: ?Sized + KnownLayout> MaybeUninit<T> {
         T: Sized,
         Self: Sized,
     {
-        // SAFETY: It is valid to transmute `val` to `MaybeUninit<T>` because it
-        // is both valid to transmute `val` to `T::MaybeUninit`, and it is valid
-        // to transmute from `T::MaybeUninit` to `MaybeUninit<T>`.
-        //
-        // First, it is valid to transmute `val` to `T::MaybeUninit` because, by
-        // invariant on `T::MaybeUninit`:
-        // - For `T: Sized`, `T` and `T::MaybeUninit` have the same size.
-        // - All byte sequences of the correct size are valid values of
-        //   `T::MaybeUninit`.
-        //
-        // Second, it is additionally valid to transmute from `T::MaybeUninit`
-        // to `MaybeUninit<T>`, because `MaybeUninit<T>` is a
-        // `repr(transparent)` wrapper around `T::MaybeUninit`.
-        //
-        // These two transmutes are collapsed into one so we don't need to add a
-        // `T::MaybeUninit: Sized` bound to this function's `where` clause.
+        /// SAFETY: It is valid to transmute `val` to `MaybeUninit<T>` because it
+        /// is both valid to transmute `val` to `T::MaybeUninit`, and it is valid
+        /// to transmute from `T::MaybeUninit` to `MaybeUninit<T>`.
+        ///
+        /// First, it is valid to transmute `val` to `T::MaybeUninit` because, by
+        /// invariant on `T::MaybeUninit`:
+        /// - For `T: Sized`, `T` and `T::MaybeUninit` have the same size.
+        /// - All byte sequences of the correct size are valid values of
+        ///   `T::MaybeUninit`.
+        ///
+        /// Second, it is additionally valid to transmute from `T::MaybeUninit`
+        /// to `MaybeUninit<T>`, because `MaybeUninit<T>` is a
+        /// `repr(transparent)` wrapper around `T::MaybeUninit`.
+        ///
+        /// These two transmutes are collapsed into one so we don't need to add a
+        /// `T::MaybeUninit: Sized` bound to this function's `where` clause.
         unsafe { crate::util::transmute_unchecked(val) }
     }
 
@@ -517,22 +517,22 @@ impl<T: ?Sized + KnownLayout> MaybeUninit<T> {
         Self: Sized,
     {
         let uninit = CoreMaybeUninit::<T>::uninit();
-        // SAFETY: It is valid to transmute from `CoreMaybeUninit<T>` to
-        // `MaybeUninit<T>` since they both admit uninitialized bytes in all
-        // positions, and they have the same size (i.e., that of `T`).
-        //
-        // `MaybeUninit<T>` has the same size as `T`, because (by invariant on
-        // `T::MaybeUninit`) `T::MaybeUninit` has `T::LAYOUT` identical to `T`,
-        // and because (invariant on `T::LAYOUT`) we can trust that `LAYOUT`
-        // accurately reflects the layout of `T`.
-        //
-        // `CoreMaybeUninit<T>` has the same size as `T` [1] and admits
-        // uninitialized bytes in all positions.
-        //
-        // [1] Per https://doc.rust-lang.org/1.81.0/std/mem/union.MaybeUninit.html#layout-1:
-        //
-        //   `MaybeUninit<T>` is guaranteed to have the same size, alignment,
-        //   and ABI as `T`
+        /// SAFETY: It is valid to transmute from `CoreMaybeUninit<T>` to
+        /// `MaybeUninit<T>` since they both admit uninitialized bytes in all
+        /// positions, and they have the same size (i.e., that of `T`).
+        ///
+        /// `MaybeUninit<T>` has the same size as `T`, because (by invariant on
+        /// `T::MaybeUninit`) `T::MaybeUninit` has `T::LAYOUT` identical to `T`,
+        /// and because (invariant on `T::LAYOUT`) we can trust that `LAYOUT`
+        /// accurately reflects the layout of `T`.
+        ///
+        /// `CoreMaybeUninit<T>` has the same size as `T` [1] and admits
+        /// uninitialized bytes in all positions.
+        ///
+        /// [1] Per https://doc.rust-lang.org/1.81.0/std/mem/union.MaybeUninit.html#layout-1:
+        ///
+        ///   `MaybeUninit<T>` is guaranteed to have the same size, alignment,
+        ///   and ABI as `T`
         unsafe { crate::util::transmute_unchecked(uninit) }
     }
 
@@ -548,11 +548,11 @@ impl<T: ?Sized + KnownLayout> MaybeUninit<T> {
     #[cfg(feature = "alloc")]
     #[inline]
     pub fn new_boxed_uninit(meta: T::PointerMetadata) -> Result<Box<Self>, AllocError> {
-        // SAFETY: `alloc::alloc::alloc_zeroed` is a valid argument of
-        // `new_box`. The referent of the pointer returned by `alloc` (and,
-        // consequently, the `Box` derived from it) is a valid instance of
-        // `Self`, because `Self` is `MaybeUninit` and thus admits arbitrary
-        // (un)initialized bytes.
+        /// SAFETY: `alloc::alloc::alloc_zeroed` is a valid argument of
+        /// `new_box`. The referent of the pointer returned by `alloc` (and,
+        /// consequently, the `Box` derived from it) is a valid instance of
+        /// `Self`, because `Self` is `MaybeUninit` and thus admits arbitrary
+        /// (un)initialized bytes.
         unsafe { crate::util::new_box(meta, alloc::alloc::alloc) }
     }
 
@@ -568,7 +568,7 @@ impl<T: ?Sized + KnownLayout> MaybeUninit<T> {
         T: Sized,
         Self: Sized,
     {
-        // SAFETY: The caller guarantees that `self` is in an bit-valid state.
+        /// SAFETY: The caller guarantees that `self` is in an bit-valid state.
         unsafe { crate::util::transmute_unchecked(self) }
     }
 }
@@ -602,9 +602,9 @@ mod tests {
         let mut u: Align<_, AU64> = Align::new(Unalign::new(AU64(123)));
         assert_eq!(u.t.try_deref().unwrap(), &AU64(123));
         assert_eq!(u.t.try_deref_mut().unwrap(), &mut AU64(123));
-        // SAFETY: The `Align<_, AU64>` guarantees proper alignment.
+        /// SAFETY: The `Align<_, AU64>` guarantees proper alignment.
         assert_eq!(unsafe { u.t.deref_unchecked() }, &AU64(123));
-        // SAFETY: The `Align<_, AU64>` guarantees proper alignment.
+        /// SAFETY: The `Align<_, AU64>` guarantees proper alignment.
         assert_eq!(unsafe { u.t.deref_mut_unchecked() }, &mut AU64(123));
         *u.t.try_deref_mut().unwrap() = AU64(321);
         assert_eq!(u.t.get(), AU64(321));
@@ -637,7 +637,7 @@ mod tests {
             let x: Align<_, AU64> = Align::new(Unalign::new(AU64(123)));
             // Make sure that `deref_unchecked` is `const`.
             //
-            // SAFETY: The `Align<_, AU64>` guarantees proper alignment.
+            /// SAFETY: The `Align<_, AU64>` guarantees proper alignment.
             let au64 = unsafe { x.t.deref_unchecked() };
             match au64 {
                 AU64(123) => {}
@@ -724,7 +724,7 @@ mod tests {
         {
             let input = 42;
             let uninit = MaybeUninit::new(input);
-            // SAFETY: `uninit` is in an initialized state
+            /// SAFETY: `uninit` is in an initialized state
             let output = unsafe { uninit.assume_init() };
             assert_eq!(input, output);
         }
@@ -733,7 +733,7 @@ mod tests {
         {
             let input = 42;
             let uninit = MaybeUninit::new(&input);
-            // SAFETY: `uninit` is in an initialized state
+            /// SAFETY: `uninit` is in an initialized state
             let output = unsafe { uninit.assume_init() };
             assert_eq!(&input as *const _, output as *const _);
             assert_eq!(input, *output);
@@ -743,7 +743,7 @@ mod tests {
         {
             let input = [1, 2, 3, 4];
             let uninit = MaybeUninit::new(&input[..]);
-            // SAFETY: `uninit` is in an initialized state
+            /// SAFETY: `uninit` is in an initialized state
             let output = unsafe { uninit.assume_init() };
             assert_eq!(&input[..] as *const _, output as *const _);
             assert_eq!(input, *output);

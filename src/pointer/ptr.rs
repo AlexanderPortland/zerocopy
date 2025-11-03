@@ -63,7 +63,7 @@ mod def {
         ///    [`I::Alignment`](invariant::Alignment).
         /// 2. `ptr` conforms to the validity invariant of
         ///    [`I::Validity`](invariant::Validity).
-        // SAFETY: `PtrInner<'a, T>` is covariant in `'a` and invariant in `T`.
+        /// SAFETY: `PtrInner<'a, T>` is covariant in `'a` and invariant in `T`.
         ptr: PtrInner<'a, T>,
         _invariants: PhantomData<I>,
     }
@@ -86,8 +86,8 @@ mod def {
         /// 2. `ptr` conforms to the validity invariant of
         ///    [`I::Validity`](invariant::Validity).
         pub(crate) unsafe fn from_inner(ptr: PtrInner<'a, T>) -> Ptr<'a, T, I> {
-            // SAFETY: The caller has promised to satisfy all safety invariants
-            // of `Ptr`.
+            /// SAFETY: The caller has promised to satisfy all safety invariants
+            /// of `Ptr`.
             Self { ptr, _invariants: PhantomData }
         }
 
@@ -171,21 +171,23 @@ mod _conversions {
         #[inline]
         pub fn from_ref(ptr: &'a T) -> Self {
             let inner = PtrInner::from_ref(ptr);
-            // SAFETY:
-            // 0. `ptr`, by invariant on `&'a T`, conforms to the aliasing
-            //    invariant of `Shared`.
-            // 1. `ptr`, by invariant on `&'a T`, conforms to the alignment
-            //    invariant of `Aligned`.
-            // 2. `ptr`'s referent, by invariant on `&'a T`, is a bit-valid `T`.
-            //    This satisfies the requirement that a `Ptr<T, (_, _, Valid)>`
-            //    point to a bit-valid `T`. Even if `T` permits interior
-            //    mutation, this invariant guarantees that the returned `Ptr`
-            //    can only ever be used to modify the referent to store
-            //    bit-valid `T`s, which ensures that the returned `Ptr` cannot
-            //    be used to violate the soundness of the original `ptr: &'a T`
-            //    or of any other references that may exist to the same
-            //    referent.
-            unsafe { Self::from_inner(inner) }
+            /// SAFETY:
+            /// 0. `ptr`, by invariant on `&'a T`, conforms to the aliasing
+            ///    invariant of `Shared`.
+            /// 1. `ptr`, by invariant on `&'a T`, conforms to the alignment
+            ///    invariant of `Aligned`.
+            /// 2. `ptr`'s referent, by invariant on `&'a T`, is a bit-valid `T`.
+            ///    This satisfies the requirement that a `Ptr<T, (_, _, Valid)>`
+            ///    point to a bit-valid `T`. Even if `T` permits interior
+            ///    mutation, this invariant guarantees that the returned `Ptr`
+            ///    can only ever be used to modify the referent to store
+            ///    bit-valid `T`s, which ensures that the returned `Ptr` cannot
+            ///    be used to violate the soundness of the original `ptr: &'a T`
+            ///    or of any other references that may exist to the same
+            ///    referent.
+            unsafe {
+                Self::from_inner(inner)
+            }
         }
     }
 
@@ -198,19 +200,21 @@ mod _conversions {
         #[inline]
         pub(crate) fn from_mut(ptr: &'a mut T) -> Self {
             let inner = PtrInner::from_mut(ptr);
-            // SAFETY:
-            // 0. `ptr`, by invariant on `&'a mut T`, conforms to the aliasing
-            //    invariant of `Exclusive`.
-            // 1. `ptr`, by invariant on `&'a mut T`, conforms to the alignment
-            //    invariant of `Aligned`.
-            // 2. `ptr`'s referent, by invariant on `&'a mut T`, is a bit-valid
-            //    `T`. This satisfies the requirement that a `Ptr<T, (_, _,
-            //    Valid)>` point to a bit-valid `T`. This invariant guarantees
-            //    that the returned `Ptr` can only ever be used to modify the
-            //    referent to store bit-valid `T`s, which ensures that the
-            //    returned `Ptr` cannot be used to violate the soundness of the
-            //    original `ptr: &'a mut T`.
-            unsafe { Self::from_inner(inner) }
+            /// SAFETY:
+            /// 0. `ptr`, by invariant on `&'a mut T`, conforms to the aliasing
+            ///    invariant of `Exclusive`.
+            /// 1. `ptr`, by invariant on `&'a mut T`, conforms to the alignment
+            ///    invariant of `Aligned`.
+            /// 2. `ptr`'s referent, by invariant on `&'a mut T`, is a bit-valid
+            ///    `T`. This satisfies the requirement that a `Ptr<T, (_, _,
+            ///    Valid)>` point to a bit-valid `T`. This invariant guarantees
+            ///    that the returned `Ptr` can only ever be used to modify the
+            ///    referent to store bit-valid `T`s, which ensures that the
+            ///    returned `Ptr` cannot be used to violate the soundness of the
+            ///    original `ptr: &'a mut T`.
+            unsafe {
+                Self::from_inner(inner)
+            }
         }
     }
 
@@ -229,35 +233,37 @@ mod _conversions {
         #[allow(clippy::wrong_self_convention)]
         pub(crate) fn as_ref(self) -> &'a T {
             let raw = self.as_inner().as_non_null();
-            // SAFETY: This invocation of `NonNull::as_ref` satisfies its
-            // documented safety preconditions:
-            //
-            // 1. The pointer is properly aligned. This is ensured by-contract
-            //    on `Ptr`, because the `I::Alignment` is `Aligned`.
-            //
-            // 2. If the pointer's referent is not zero-sized, then the pointer
-            //    must be “dereferenceable” in the sense defined in the module
-            //    documentation; i.e.:
-            //
-            //    > The memory range of the given size starting at the pointer
-            //    > must all be within the bounds of a single allocated object.
-            //    > [2]
-            //
-            //   This is ensured by contract on all `PtrInner`s.
-            //
-            // 3. The pointer must point to a validly-initialized instance of
-            //    `T`. This is ensured by-contract on `Ptr`, because the
-            //    `I::Validity` is `Valid`.
-            //
-            // 4. You must enforce Rust’s aliasing rules. This is ensured by
-            //    contract on `Ptr`, because `I::Aliasing: Reference`. Either it
-            //    is `Shared` or `Exclusive`. If it is `Shared`, other
-            //    references may not mutate the referent outside of
-            //    `UnsafeCell`s.
-            //
-            // [1]: https://doc.rust-lang.org/std/ptr/struct.NonNull.html#method.as_ref
-            // [2]: https://doc.rust-lang.org/std/ptr/index.html#safety
-            unsafe { raw.as_ref() }
+            /// SAFETY: This invocation of `NonNull::as_ref` satisfies its
+            /// documented safety preconditions:
+            ///
+            /// 1. The pointer is properly aligned. This is ensured by-contract
+            ///    on `Ptr`, because the `I::Alignment` is `Aligned`.
+            ///
+            /// 2. If the pointer's referent is not zero-sized, then the pointer
+            ///    must be “dereferenceable” in the sense defined in the module
+            ///    documentation; i.e.:
+            ///
+            ///    > The memory range of the given size starting at the pointer
+            ///    > must all be within the bounds of a single allocated object.
+            ///    > [2]
+            ///
+            ///   This is ensured by contract on all `PtrInner`s.
+            ///
+            /// 3. The pointer must point to a validly-initialized instance of
+            ///    `T`. This is ensured by-contract on `Ptr`, because the
+            ///    `I::Validity` is `Valid`.
+            ///
+            /// 4. You must enforce Rust’s aliasing rules. This is ensured by
+            ///    contract on `Ptr`, because `I::Aliasing: Reference`. Either it
+            ///    is `Shared` or `Exclusive`. If it is `Shared`, other
+            ///    references may not mutate the referent outside of
+            ///    `UnsafeCell`s.
+            ///
+            /// [1]: https://doc.rust-lang.org/std/ptr/struct.NonNull.html#method.as_ref
+            /// [2]: https://doc.rust-lang.org/std/ptr/index.html#safety
+            unsafe {
+                raw.as_ref()
+            }
         }
     }
 
@@ -279,38 +285,40 @@ mod _conversions {
         where
             'a: 'b,
         {
-            // SAFETY: The following all hold by invariant on `self`, and thus
-            // hold of `ptr = self.as_inner()`:
-            // 0. SEE BELOW.
-            // 1. `ptr` conforms to the alignment invariant of
-            //    [`I::Alignment`](invariant::Alignment).
-            // 2. `ptr` conforms to the validity invariant of
-            //    [`I::Validity`](invariant::Validity). `self` and the returned
-            //    `Ptr` permit the same bit values in their referents since they
-            //    have the same referent type (`T`) and the same validity
-            //    (`I::Validity`). Thus, regardless of what mutation is
-            //    permitted (`Exclusive` aliasing or `Shared`-aliased interior
-            //    mutation), neither can be used to write a value to the
-            //    referent which violates the other's validity invariant.
-            //
-            // For aliasing (0 above), since `I::Aliasing: Reference`,
-            // there are two cases for `I::Aliasing`:
-            // - For `invariant::Shared`: `'a` outlives `'b`, and so the
-            //   returned `Ptr` does not permit accessing the referent any
-            //   longer than is possible via `self`. For shared aliasing, it is
-            //   sound for multiple `Ptr`s to exist simultaneously which
-            //   reference the same memory, so creating a new one is not
-            //   problematic.
-            // - For `invariant::Exclusive`: Since `self` is `&'b mut` and we
-            //   return a `Ptr` with lifetime `'b`, `self` is inaccessible to
-            //   the caller for the lifetime `'b` - in other words, `self` is
-            //   inaccessible to the caller as long as the returned `Ptr`
-            //   exists. Since `self` is an exclusive `Ptr`, no other live
-            //   references or `Ptr`s may exist which refer to the same memory
-            //   while `self` is live. Thus, as long as the returned `Ptr`
-            //   exists, no other references or `Ptr`s which refer to the same
-            //   memory may be live.
-            unsafe { Ptr::from_inner(self.as_inner()) }
+            /// SAFETY: The following all hold by invariant on `self`, and thus
+            /// hold of `ptr = self.as_inner()`:
+            /// 0. SEE BELOW.
+            /// 1. `ptr` conforms to the alignment invariant of
+            ///    [`I::Alignment`](invariant::Alignment).
+            /// 2. `ptr` conforms to the validity invariant of
+            ///    [`I::Validity`](invariant::Validity). `self` and the returned
+            ///    `Ptr` permit the same bit values in their referents since they
+            ///    have the same referent type (`T`) and the same validity
+            ///    (`I::Validity`). Thus, regardless of what mutation is
+            ///    permitted (`Exclusive` aliasing or `Shared`-aliased interior
+            ///    mutation), neither can be used to write a value to the
+            ///    referent which violates the other's validity invariant.
+            ///
+            /// For aliasing (0 above), since `I::Aliasing: Reference`,
+            /// there are two cases for `I::Aliasing`:
+            /// - For `invariant::Shared`: `'a` outlives `'b`, and so the
+            ///   returned `Ptr` does not permit accessing the referent any
+            ///   longer than is possible via `self`. For shared aliasing, it is
+            ///   sound for multiple `Ptr`s to exist simultaneously which
+            ///   reference the same memory, so creating a new one is not
+            ///   problematic.
+            /// - For `invariant::Exclusive`: Since `self` is `&'b mut` and we
+            ///   return a `Ptr` with lifetime `'b`, `self` is inaccessible to
+            ///   the caller for the lifetime `'b` - in other words, `self` is
+            ///   inaccessible to the caller as long as the returned `Ptr`
+            ///   exists. Since `self` is an exclusive `Ptr`, no other live
+            ///   references or `Ptr`s may exist which refer to the same memory
+            ///   while `self` is live. Thus, as long as the returned `Ptr`
+            ///   exists, no other references or `Ptr`s which refer to the same
+            ///   memory may be live.
+            unsafe {
+                Ptr::from_inner(self.as_inner())
+            }
         }
     }
 
@@ -323,33 +331,35 @@ mod _conversions {
         #[allow(clippy::wrong_self_convention)]
         pub(crate) fn as_mut(self) -> &'a mut T {
             let mut raw = self.as_inner().as_non_null();
-            // SAFETY: This invocation of `NonNull::as_mut` satisfies its
-            // documented safety preconditions:
-            //
-            // 1. The pointer is properly aligned. This is ensured by-contract
-            //    on `Ptr`, because the `ALIGNMENT_INVARIANT` is `Aligned`.
-            //
-            // 2. If the pointer's referent is not zero-sized, then the pointer
-            //    must be “dereferenceable” in the sense defined in the module
-            //    documentation; i.e.:
-            //
-            //    > The memory range of the given size starting at the pointer
-            //    > must all be within the bounds of a single allocated object.
-            //    > [2]
-            //
-            //   This is ensured by contract on all `PtrInner`s.
-            //
-            // 3. The pointer must point to a validly-initialized instance of
-            //    `T`. This is ensured by-contract on `Ptr`, because the
-            //    validity invariant is `Valid`.
-            //
-            // 4. You must enforce Rust’s aliasing rules. This is ensured by
-            //    contract on `Ptr`, because the `ALIASING_INVARIANT` is
-            //    `Exclusive`.
-            //
-            // [1]: https://doc.rust-lang.org/std/ptr/struct.NonNull.html#method.as_mut
-            // [2]: https://doc.rust-lang.org/std/ptr/index.html#safety
-            unsafe { raw.as_mut() }
+            /// SAFETY: This invocation of `NonNull::as_mut` satisfies its
+            /// documented safety preconditions:
+            ///
+            /// 1. The pointer is properly aligned. This is ensured by-contract
+            ///    on `Ptr`, because the `ALIGNMENT_INVARIANT` is `Aligned`.
+            ///
+            /// 2. If the pointer's referent is not zero-sized, then the pointer
+            ///    must be “dereferenceable” in the sense defined in the module
+            ///    documentation; i.e.:
+            ///
+            ///    > The memory range of the given size starting at the pointer
+            ///    > must all be within the bounds of a single allocated object.
+            ///    > [2]
+            ///
+            ///   This is ensured by contract on all `PtrInner`s.
+            ///
+            /// 3. The pointer must point to a validly-initialized instance of
+            ///    `T`. This is ensured by-contract on `Ptr`, because the
+            ///    validity invariant is `Valid`.
+            ///
+            /// 4. You must enforce Rust’s aliasing rules. This is ensured by
+            ///    contract on `Ptr`, because the `ALIASING_INVARIANT` is
+            ///    `Exclusive`.
+            ///
+            /// [1]: https://doc.rust-lang.org/std/ptr/struct.NonNull.html#method.as_mut
+            /// [2]: https://doc.rust-lang.org/std/ptr/index.html#safety
+            unsafe {
+                raw.as_mut()
+            }
         }
     }
 
@@ -363,19 +373,21 @@ mod _conversions {
             V: Validity,
             U: TransmuteFromPtr<T, I::Aliasing, I::Validity, V, R> + SizeEq<T> + ?Sized,
         {
-            // SAFETY:
-            // - `SizeEq::cast_from_raw` promises to preserve address,
-            //   provenance, and the number of bytes in the referent
-            // - If aliasing is `Shared`, then by `U: TransmuteFromPtr<T>`, at
-            //   least one of the following holds:
-            //   - `T: Immutable` and `U: Immutable`, in which case it is
-            //     trivially sound for shared code to operate on a `&T` and `&U`
-            //     at the same time, as neither can perform interior mutation
-            //   - It is directly guaranteed that it is sound for shared code to
-            //     operate on these references simultaneously
-            // - By `U: TransmuteFromPtr<T, I::Aliasing, I::Validity, V>`, it is
-            //   sound to perform this transmute.
-            unsafe { self.transmute_unchecked(SizeEq::cast_from_raw) }
+            /// SAFETY:
+            /// - `SizeEq::cast_from_raw` promises to preserve address,
+            ///   provenance, and the number of bytes in the referent
+            /// - If aliasing is `Shared`, then by `U: TransmuteFromPtr<T>`, at
+            ///   least one of the following holds:
+            ///   - `T: Immutable` and `U: Immutable`, in which case it is
+            ///     trivially sound for shared code to operate on a `&T` and `&U`
+            ///     at the same time, as neither can perform interior mutation
+            ///   - It is directly guaranteed that it is sound for shared code to
+            ///     operate on these references simultaneously
+            /// - By `U: TransmuteFromPtr<T, I::Aliasing, I::Validity, V>`, it is
+            ///   sound to perform this transmute.
+            unsafe {
+                self.transmute_unchecked(SizeEq::cast_from_raw)
+            }
         }
 
         #[doc(hidden)]
@@ -386,18 +398,20 @@ mod _conversions {
             V: Validity,
             T: TransmuteFromPtr<T, I::Aliasing, I::Validity, V, R>,
         {
-            // SAFETY:
-            // - This cast is a no-op, and so trivially preserves address,
-            //   referent size, and provenance
-            // - It is trivially sound to have multiple `&T` referencing the same
-            //   referent simultaneously
-            // - By `T: TransmuteFromPtr<T, I::Aliasing, I::Validity, V>`, it is
-            //   sound to perform this transmute.
+            /// SAFETY:
+            /// - This cast is a no-op, and so trivially preserves address,
+            ///   referent size, and provenance
+            /// - It is trivially sound to have multiple `&T` referencing the same
+            ///   referent simultaneously
+            /// - By `T: TransmuteFromPtr<T, I::Aliasing, I::Validity, V>`, it is
+            ///   sound to perform this transmute.
             let ptr = unsafe { self.transmute_unchecked(SizeEq::cast_from_raw) };
-            // SAFETY: `self` and `ptr` have the same address and referent type.
-            // Therefore, if `self` satisfies `I::Alignment`, then so does
-            // `ptr`.
-            unsafe { ptr.assume_alignment::<I::Alignment>() }
+            /// SAFETY: `self` and `ptr` have the same address and referent type.
+            /// Therefore, if `self` satisfies `I::Alignment`, then so does
+            /// `ptr`.
+            unsafe {
+                ptr.assume_alignment::<I::Alignment>()
+            }
         }
 
         /// Casts to a different (unsized) target type without checking interior
@@ -435,34 +449,36 @@ mod _conversions {
         {
             let ptr = cast(self.as_inner());
 
-            // SAFETY:
-            //
-            // The following safety arguments rely on the fact that the caller
-            // promises that `cast` returns a `PtrInner` which addresses a
-            // prefix of the bytes of `*self`, and so properties that hold of
-            // `*self` also hold of `*ptr`.
-            //
-            // 0. `ptr` conforms to the aliasing invariant of `I::Aliasing`:
-            //    - `Exclusive`: `self` is the only `Ptr` or reference which is
-            //      permitted to read or modify the referent for the lifetime
-            //      `'a`. Since we consume `self` by value, the returned pointer
-            //      remains the only `Ptr` or reference which is permitted to
-            //      read or modify the referent for the lifetime `'a`.
-            //    - `Shared`: Since `self` has aliasing `Shared`, we know that
-            //      no other code may mutate the referent during the lifetime
-            //      `'a`, except via `UnsafeCell`s, and except as permitted by
-            //      `T`'s library safety invariants. The caller promises that
-            //      any safe operations which can be permitted on a `&T` and a
-            //      `&U` simultaneously must be sound. Thus, no operations on a
-            //      `&U` could violate `&T`'s library safety invariants, and
-            //      vice-versa. Since any mutation via shared references outside
-            //      of `UnsafeCell`s is unsound, this must be impossible using
-            //      `&T` and `&U`.
-            //    - `Inaccessible`: There are no restrictions we need to uphold.
-            // 1. `ptr` trivially satisfies the alignment invariant `Unaligned`.
-            // 2. The caller promises that `ptr` conforms to the validity
-            //    invariant `V` with respect to its referent type, `U`.
-            unsafe { Ptr::from_inner(ptr) }
+            /// SAFETY:
+            ///
+            /// The following safety arguments rely on the fact that the caller
+            /// promises that `cast` returns a `PtrInner` which addresses a
+            /// prefix of the bytes of `*self`, and so properties that hold of
+            /// `*self` also hold of `*ptr`.
+            ///
+            /// 0. `ptr` conforms to the aliasing invariant of `I::Aliasing`:
+            ///    - `Exclusive`: `self` is the only `Ptr` or reference which is
+            ///      permitted to read or modify the referent for the lifetime
+            ///      `'a`. Since we consume `self` by value, the returned pointer
+            ///      remains the only `Ptr` or reference which is permitted to
+            ///      read or modify the referent for the lifetime `'a`.
+            ///    - `Shared`: Since `self` has aliasing `Shared`, we know that
+            ///      no other code may mutate the referent during the lifetime
+            ///      `'a`, except via `UnsafeCell`s, and except as permitted by
+            ///      `T`'s library safety invariants. The caller promises that
+            ///      any safe operations which can be permitted on a `&T` and a
+            ///      `&U` simultaneously must be sound. Thus, no operations on a
+            ///      `&U` could violate `&T`'s library safety invariants, and
+            ///      vice-versa. Since any mutation via shared references outside
+            ///      of `UnsafeCell`s is unsound, this must be impossible using
+            ///      `&T` and `&U`.
+            ///    - `Inaccessible`: There are no restrictions we need to uphold.
+            /// 1. `ptr` trivially satisfies the alignment invariant `Unaligned`.
+            /// 2. The caller promises that `ptr` conforms to the validity
+            ///    invariant `V` with respect to its referent type, `U`.
+            unsafe {
+                Ptr::from_inner(ptr)
+            }
         }
     }
 
@@ -476,23 +492,23 @@ mod _conversions {
         pub(crate) fn into_unalign(
             self,
         ) -> Ptr<'a, crate::Unalign<T>, (I::Aliasing, Aligned, I::Validity)> {
-            // SAFETY:
-            // - This cast preserves provenance.
-            // - This cast preserves address. `Unalign<T>` promises to have the
-            //   same size as `T`, and so the cast returns a pointer addressing
-            //   the same byte range as `p`.
-            // - By the same argument, the returned pointer refers to
-            //   `UnsafeCell`s at the same locations as `p`.
-            // - `Unalign<T>` promises to have the same bit validity as `T`. By
-            //   invariant on `Validity`, the set of bit patterns allowed in the
-            //   referent of a `Ptr<X, (_, _, V)>` is only a function of the
-            //   validity of `X` and of `V`. Thus, the set of bit patterns
-            //   allowed in the referent of a `Ptr<T, (_, _, I::Validity)>` is
-            //   the same as the set of bit patterns allowed in the referent of
-            //   a `Ptr<Unalign<T>, (_, _, I::Validity)>`. As a result, `self`
-            //   and the returned `Ptr` permit the same set of bit patterns in
-            //   their referents, and so neither can be used to violate the
-            //   validity of the other.
+            /// SAFETY:
+            /// - This cast preserves provenance.
+            /// - This cast preserves address. `Unalign<T>` promises to have the
+            ///   same size as `T`, and so the cast returns a pointer addressing
+            ///   the same byte range as `p`.
+            /// - By the same argument, the returned pointer refers to
+            ///   `UnsafeCell`s at the same locations as `p`.
+            /// - `Unalign<T>` promises to have the same bit validity as `T`. By
+            ///   invariant on `Validity`, the set of bit patterns allowed in the
+            ///   referent of a `Ptr<X, (_, _, V)>` is only a function of the
+            ///   validity of `X` and of `V`. Thus, the set of bit patterns
+            ///   allowed in the referent of a `Ptr<T, (_, _, I::Validity)>` is
+            ///   the same as the set of bit patterns allowed in the referent of
+            ///   a `Ptr<Unalign<T>, (_, _, I::Validity)>`. As a result, `self`
+            ///   and the returned `Ptr` permit the same set of bit patterns in
+            ///   their referents, and so neither can be used to violate the
+            ///   validity of the other.
             let ptr = unsafe { self.transmute_unchecked(PtrInner::cast_sized) };
             ptr.bikeshed_recall_aligned()
         }
@@ -568,12 +584,14 @@ mod _transitions {
 
             assert!(I::Aliasing::IS_EXCL);
 
-            // SAFETY: We've confirmed that `self` already has the aliasing
-            // `Exclusive`. If it didn't, either the preceding assert would fail
-            // or evaluating `I::Aliasing::IS_EXCL` would fail. We're *pretty*
-            // sure that it's guaranteed to fail const eval, but the `assert!`
-            // provides a backstop in case that doesn't work.
-            unsafe { self.assume_exclusive() }
+            /// SAFETY: We've confirmed that `self` already has the aliasing
+            /// `Exclusive`. If it didn't, either the preceding assert would fail
+            /// or evaluating `I::Aliasing::IS_EXCL` would fail. We're *pretty*
+            /// sure that it's guaranteed to fail const eval, but the `assert!`
+            /// provides a backstop in case that doesn't work.
+            unsafe {
+                self.assume_exclusive()
+            }
         }
 
         /// Assumes that `self` satisfies the invariants `H`.
@@ -582,10 +600,12 @@ mod _transitions {
         ///
         /// The caller promises that `self` satisfies the invariants `H`.
         unsafe fn assume_invariants<H: Invariants>(self) -> Ptr<'a, T, H> {
-            // SAFETY: The caller has promised to satisfy all parameterized
-            // invariants of `Ptr`. `Ptr`'s other invariants are satisfied
-            // by-contract by the source `Ptr`.
-            unsafe { Ptr::from_inner(self.as_inner()) }
+            /// SAFETY: The caller has promised to satisfy all parameterized
+            /// invariants of `Ptr`. `Ptr`'s other invariants are satisfied
+            /// by-contract by the source `Ptr`.
+            unsafe {
+                Ptr::from_inner(self.as_inner())
+            }
         }
 
         /// Helps the type system unify two distinct invariant types which are
@@ -595,9 +615,11 @@ mod _transitions {
         >(
             self,
         ) -> Ptr<'a, T, H> {
-            // SAFETY: The associated type bounds on `H` ensure that the
-            // invariants are unchanged.
-            unsafe { self.assume_invariants::<H>() }
+            /// SAFETY: The associated type bounds on `H` ensure that the
+            /// invariants are unchanged.
+            unsafe {
+                self.assume_invariants::<H>()
+            }
         }
 
         /// Assumes that `self` satisfies the aliasing requirement of `A`.
@@ -610,9 +632,11 @@ mod _transitions {
         pub(crate) unsafe fn assume_aliasing<A: Aliasing>(
             self,
         ) -> Ptr<'a, T, (A, I::Alignment, I::Validity)> {
-            // SAFETY: The caller promises that `self` satisfies the aliasing
-            // requirements of `A`.
-            unsafe { self.assume_invariants() }
+            /// SAFETY: The caller promises that `self` satisfies the aliasing
+            /// requirements of `A`.
+            unsafe {
+                self.assume_invariants()
+            }
         }
 
         /// Assumes `self` satisfies the aliasing requirement of [`Exclusive`].
@@ -627,9 +651,11 @@ mod _transitions {
         pub(crate) unsafe fn assume_exclusive(
             self,
         ) -> Ptr<'a, T, (Exclusive, I::Alignment, I::Validity)> {
-            // SAFETY: The caller promises that `self` satisfies the aliasing
-            // requirements of `Exclusive`.
-            unsafe { self.assume_aliasing::<Exclusive>() }
+            /// SAFETY: The caller promises that `self` satisfies the aliasing
+            /// requirements of `Exclusive`.
+            unsafe {
+                self.assume_aliasing::<Exclusive>()
+            }
         }
 
         /// Assumes that `self`'s referent is validly-aligned for `T` if
@@ -643,9 +669,11 @@ mod _transitions {
         pub(crate) unsafe fn assume_alignment<A: Alignment>(
             self,
         ) -> Ptr<'a, T, (I::Aliasing, A, I::Validity)> {
-            // SAFETY: The caller promises that `self`'s referent is
-            // well-aligned for `T` if required by `A` .
-            unsafe { self.assume_invariants() }
+            /// SAFETY: The caller promises that `self`'s referent is
+            /// well-aligned for `T` if required by `A` .
+            unsafe {
+                self.assume_invariants()
+            }
         }
 
         /// Checks the `self`'s alignment at runtime, returning an aligned `Ptr`
@@ -662,7 +690,7 @@ mod _transitions {
                 return Err(err.with_src(self));
             }
 
-            // SAFETY: We just checked the alignment.
+            /// SAFETY: We just checked the alignment.
             Ok(unsafe { self.assume_alignment::<Aligned>() })
         }
 
@@ -676,9 +704,11 @@ mod _transitions {
         where
             T: crate::Unaligned,
         {
-            // SAFETY: The bound `T: Unaligned` ensures that `T` has no
-            // non-trivial alignment requirement.
-            unsafe { self.assume_alignment::<Aligned>() }
+            /// SAFETY: The bound `T: Unaligned` ensures that `T` has no
+            /// non-trivial alignment requirement.
+            unsafe {
+                self.assume_alignment::<Aligned>()
+            }
         }
 
         /// Assumes that `self`'s referent conforms to the validity requirement
@@ -694,9 +724,11 @@ mod _transitions {
         pub unsafe fn assume_validity<V: Validity>(
             self,
         ) -> Ptr<'a, T, (I::Aliasing, I::Alignment, V)> {
-            // SAFETY: The caller promises that `self`'s referent conforms to
-            // the validity requirement of `V`.
-            unsafe { self.assume_invariants() }
+            /// SAFETY: The caller promises that `self`'s referent conforms to
+            /// the validity requirement of `V`.
+            unsafe {
+                self.assume_invariants()
+            }
         }
 
         /// A shorthand for `self.assume_validity<invariant::Initialized>()`.
@@ -711,9 +743,11 @@ mod _transitions {
         pub unsafe fn assume_initialized(
             self,
         ) -> Ptr<'a, T, (I::Aliasing, I::Alignment, Initialized)> {
-            // SAFETY: The caller has promised to uphold the safety
-            // preconditions.
-            unsafe { self.assume_validity::<Initialized>() }
+            /// SAFETY: The caller has promised to uphold the safety
+            /// preconditions.
+            unsafe {
+                self.assume_validity::<Initialized>()
+            }
         }
 
         /// A shorthand for `self.assume_validity<Valid>()`.
@@ -726,9 +760,11 @@ mod _transitions {
         #[must_use]
         #[inline]
         pub unsafe fn assume_valid(self) -> Ptr<'a, T, (I::Aliasing, I::Alignment, Valid)> {
-            // SAFETY: The caller has promised to uphold the safety
-            // preconditions.
-            unsafe { self.assume_validity::<Valid>() }
+            /// SAFETY: The caller has promised to uphold the safety
+            /// preconditions.
+            unsafe {
+                self.assume_validity::<Valid>()
+            }
         }
 
         /// Recalls that `self`'s referent is initialized.
@@ -744,13 +780,15 @@ mod _transitions {
             T: crate::IntoBytes + crate::FromBytes,
             I: Invariants<Validity = Valid>,
         {
-            // SAFETY: The `T: IntoBytes + FromBytes` bound ensures that `T`'s
-            // bit validity is equivalent to `[u8]`. In other words, the set of
-            // allowed referents for a `Ptr<T, (_, _, Valid)>` is the set of
-            // initialized bit patterns. The same is true of the set of allowed
-            // referents for any `Ptr<_, (_, _, Initialized)>`. Thus, this call
-            // does not change the set of allowed values in the referent.
-            unsafe { self.assume_initialized() }
+            /// SAFETY: The `T: IntoBytes + FromBytes` bound ensures that `T`'s
+            /// bit validity is equivalent to `[u8]`. In other words, the set of
+            /// allowed referents for a `Ptr<T, (_, _, Valid)>` is the set of
+            /// initialized bit patterns. The same is true of the set of allowed
+            /// referents for any `Ptr<_, (_, _, Initialized)>`. Thus, this call
+            /// does not change the set of allowed values in the referent.
+            unsafe {
+                self.assume_initialized()
+            }
         }
 
         /// Recalls that `self`'s referent is initialized.
@@ -766,22 +804,24 @@ mod _transitions {
             T: crate::IntoBytes + crate::Immutable,
             I: Invariants<Aliasing = Shared, Validity = Valid>,
         {
-            // SAFETY: Let `O` (for "old") be the set of allowed bit patterns in
-            // `self`'s referent, and let `N` (for "new") be the set of allowed
-            // bit patterns in the referent of the returned `Ptr`. `T:
-            // IntoBytes` and `I: Invariants<Validity = Valid>` ensures that `O`
-            // cannot contain any uninitialized bit patterns. Since the returned
-            // `Ptr` has validity `Initialized`, `N` is equal to the set of all
-            // initialized bit patterns. Thus, `O` is a subset of `N`, and so
-            // the returned `Ptr`'s validity invariant is upheld.
-            //
-            // Since `T: Immutable` and aliasing is `Shared`, the returned `Ptr`
-            // cannot be used to modify the referent. Before this call, `self`'s
-            // referent is guaranteed by invariant on `Ptr` to satisfy `self`'s
-            // validity invariant. Since the returned `Ptr` cannot be used to
-            // modify the referent, this guarantee cannot be violated by the
-            // returned `Ptr` (even if `O` is a strict subset of `N`).
-            unsafe { self.assume_initialized() }
+            /// SAFETY: Let `O` (for "old") be the set of allowed bit patterns in
+            /// `self`'s referent, and let `N` (for "new") be the set of allowed
+            /// bit patterns in the referent of the returned `Ptr`. `T:
+            /// IntoBytes` and `I: Invariants<Validity = Valid>` ensures that `O`
+            /// cannot contain any uninitialized bit patterns. Since the returned
+            /// `Ptr` has validity `Initialized`, `N` is equal to the set of all
+            /// initialized bit patterns. Thus, `O` is a subset of `N`, and so
+            /// the returned `Ptr`'s validity invariant is upheld.
+            ///
+            /// Since `T: Immutable` and aliasing is `Shared`, the returned `Ptr`
+            /// cannot be used to modify the referent. Before this call, `self`'s
+            /// referent is guaranteed by invariant on `Ptr` to satisfy `self`'s
+            /// validity invariant. Since the returned `Ptr` cannot be used to
+            /// modify the referent, this guarantee cannot be violated by the
+            /// returned `Ptr` (even if `O` is a strict subset of `N`).
+            unsafe {
+                self.assume_initialized()
+            }
         }
 
         /// Checks that `self`'s referent is validly initialized for `T`,
@@ -811,12 +851,12 @@ mod _transitions {
             // issues, as we have not generated any invalid state which we need to
             // fix before returning.
             if T::is_bit_valid(self.reborrow().forget_aligned()) {
-                // SAFETY: If `T::is_bit_valid`, code may assume that `self`
-                // contains a bit-valid instance of `T`. By `T:
-                // TryTransmuteFromPtr<T, I::Aliasing, I::Validity, Valid>`, so
-                // long as `self`'s referent conforms to the `Valid` validity
-                // for `T` (which we just confirmed), then this transmute is
-                // sound.
+                /// SAFETY: If `T::is_bit_valid`, code may assume that `self`
+                /// contains a bit-valid instance of `T`. By `T:
+                /// TryTransmuteFromPtr<T, I::Aliasing, I::Validity, Valid>`, so
+                /// long as `self`'s referent conforms to the `Valid` validity
+                /// for `T` (which we just confirmed), then this transmute is
+                /// sound.
                 Ok(unsafe { self.assume_valid() })
             } else {
                 Err(ValidityError::new(self))
@@ -828,8 +868,10 @@ mod _transitions {
         #[must_use]
         #[inline]
         pub fn forget_aligned(self) -> Ptr<'a, T, (I::Aliasing, Unaligned, I::Validity)> {
-            // SAFETY: `Unaligned` is less restrictive than `Aligned`.
-            unsafe { self.assume_invariants() }
+            /// SAFETY: `Unaligned` is less restrictive than `Aligned`.
+            unsafe {
+                self.assume_invariants()
+            }
         }
     }
 }
@@ -874,28 +916,30 @@ mod _casts {
         where
             U: 'a + CastableFrom<T, I::Validity, I::Validity> + ?Sized,
         {
-            // SAFETY:
-            // - The caller promises that `u = cast(p)` is a pointer which
-            //   satisfies:
-            //   - `u` addresses a subset of the bytes addressed by `p`
-            //   - `u` has the same provenance as `p`
-            //   - If `I::Aliasing` is [`Shared`], it must not be possible for
-            //     safe code, operating on a `&T` and `&U` with the same
-            //     referent simultaneously, to cause undefined behavior
-            // - By `U: CastableFrom<T, I::Validity, I::Validity>`,
-            //   `I::Validity` is either `Uninit` or `Initialized`. In both
-            //   cases, the bit validity `I::Validity` has the same semantics
-            //   regardless of referent type. In other words, the set of allowed
-            //   referent values for `Ptr<T, (_, _, I::Validity)>` and `Ptr<U,
-            //   (_, _, I::Validity)>` are identical. As a consequence, neither
-            //   `self` nor the returned `Ptr` can be used to write values which
-            //   are invalid for the other.
-            //
-            // `transmute_unchecked` guarantees that it will only pass pointers
-            // to `cast` which either reference a zero-sized byte range or
-            // reference a byte range which is entirely contained inside of an
-            // allocated object.
-            unsafe { self.transmute_unchecked(cast) }
+            /// SAFETY:
+            /// - The caller promises that `u = cast(p)` is a pointer which
+            ///   satisfies:
+            ///   - `u` addresses a subset of the bytes addressed by `p`
+            ///   - `u` has the same provenance as `p`
+            ///   - If `I::Aliasing` is [`Shared`], it must not be possible for
+            ///     safe code, operating on a `&T` and `&U` with the same
+            ///     referent simultaneously, to cause undefined behavior
+            /// - By `U: CastableFrom<T, I::Validity, I::Validity>`,
+            ///   `I::Validity` is either `Uninit` or `Initialized`. In both
+            ///   cases, the bit validity `I::Validity` has the same semantics
+            ///   regardless of referent type. In other words, the set of allowed
+            ///   referent values for `Ptr<T, (_, _, I::Validity)>` and `Ptr<U,
+            ///   (_, _, I::Validity)>` are identical. As a consequence, neither
+            ///   `self` nor the returned `Ptr` can be used to write values which
+            ///   are invalid for the other.
+            ///
+            /// `transmute_unchecked` guarantees that it will only pass pointers
+            /// to `cast` which either reference a zero-sized byte range or
+            /// reference a byte range which is entirely contained inside of an
+            /// allocated object.
+            unsafe {
+                self.transmute_unchecked(cast)
+            }
         }
 
         /// Casts to a different (unsized) target type.
@@ -917,17 +961,19 @@ mod _casts {
             U: 'a + ?Sized + CastableFrom<T, I::Validity, I::Validity>,
             F: FnOnce(PtrInner<'a, T>) -> PtrInner<'a, U>,
         {
-            // SAFETY: Because `T: MutationCompatible<U, I::Aliasing, R>`, one
-            // of the following holds:
-            // - `T: Read<I::Aliasing>` and `U: Read<I::Aliasing>`, in which
-            //   case one of the following holds:
-            //   - `I::Aliasing` is `Exclusive`
-            //   - `T` and `U` are both `Immutable`
-            // - It is sound for safe code to operate on `&T` and `&U` with the
-            //   same referent simultaneously
-            //
-            // The caller promises all other safety preconditions.
-            unsafe { self.cast_unsized_unchecked(cast) }
+            /// SAFETY: Because `T: MutationCompatible<U, I::Aliasing, R>`, one
+            /// of the following holds:
+            /// - `T: Read<I::Aliasing>` and `U: Read<I::Aliasing>`, in which
+            ///   case one of the following holds:
+            ///   - `I::Aliasing` is `Exclusive`
+            ///   - `T` and `U` are both `Immutable`
+            /// - It is sound for safe code to operate on `&T` and `&U` with the
+            ///   same referent simultaneously
+            ///
+            /// The caller promises all other safety preconditions.
+            unsafe {
+                self.cast_unsized_unchecked(cast)
+            }
         }
     }
 
@@ -945,9 +991,9 @@ mod _casts {
             T: Read<I::Aliasing, R>,
             I::Aliasing: Reference,
         {
-            // SAFETY: `PtrInner::as_bytes` returns a pointer which addresses
-            // the same byte range as its argument, and which has the same
-            // provenance.
+            /// SAFETY: `PtrInner::as_bytes` returns a pointer which addresses
+            /// the same byte range as its argument, and which has the same
+            /// provenance.
             let ptr = unsafe { self.cast_unsized(PtrInner::as_bytes) };
             ptr.bikeshed_recall_aligned().recall_validity::<Valid, (_, (_, _))>()
         }
@@ -962,35 +1008,37 @@ mod _casts {
         #[allow(clippy::wrong_self_convention)]
         pub(crate) fn as_slice(self) -> Ptr<'a, [T], I> {
             let slice = self.as_inner().as_slice();
-            // SAFETY: Note that, by post-condition on `PtrInner::as_slice`,
-            // `slice` refers to the same byte range as `self.as_inner()`.
-            //
-            // 0. Thus, `slice` conforms to the aliasing invariant of
-            //    `I::Aliasing` because `self` does.
-            // 1. By the above lemma, `slice` conforms to the alignment
-            //    invariant of `I::Alignment` because `self` does.
-            // 2. Since `[T; N]` and `[T]` have the same bit validity [1][2],
-            //    and since `self` and the returned `Ptr` have the same validity
-            //    invariant, neither `self` nor the returned `Ptr` can be used
-            //    to write a value to the referent which violates the other's
-            //    validity invariant.
-            //
-            // [1] Per https://doc.rust-lang.org/1.81.0/reference/type-layout.html#array-layout:
-            //
-            //   An array of `[T; N]` has a size of `size_of::<T>() * N` and the
-            //   same alignment of `T`. Arrays are laid out so that the
-            //   zero-based `nth` element of the array is offset from the start
-            //   of the array by `n * size_of::<T>()` bytes.
-            //
-            //   ...
-            //
-            //   Slices have the same layout as the section of the array they
-            //   slice.
-            //
-            // [2] Per https://doc.rust-lang.org/1.81.0/reference/types/array.html#array-types:
-            //
-            //   All elements of arrays are always initialized
-            unsafe { Ptr::from_inner(slice) }
+            /// SAFETY: Note that, by post-condition on `PtrInner::as_slice`,
+            /// `slice` refers to the same byte range as `self.as_inner()`.
+            ///
+            /// 0. Thus, `slice` conforms to the aliasing invariant of
+            ///    `I::Aliasing` because `self` does.
+            /// 1. By the above lemma, `slice` conforms to the alignment
+            ///    invariant of `I::Alignment` because `self` does.
+            /// 2. Since `[T; N]` and `[T]` have the same bit validity [1][2],
+            ///    and since `self` and the returned `Ptr` have the same validity
+            ///    invariant, neither `self` nor the returned `Ptr` can be used
+            ///    to write a value to the referent which violates the other's
+            ///    validity invariant.
+            ///
+            /// [1] Per https://doc.rust-lang.org/1.81.0/reference/type-layout.html#array-layout:
+            ///
+            ///   An array of `[T; N]` has a size of `size_of::<T>() * N` and the
+            ///   same alignment of `T`. Arrays are laid out so that the
+            ///   zero-based `nth` element of the array is offset from the start
+            ///   of the array by `n * size_of::<T>()` bytes.
+            ///
+            ///   ...
+            ///
+            ///   Slices have the same layout as the section of the array they
+            ///   slice.
+            ///
+            /// [2] Per https://doc.rust-lang.org/1.81.0/reference/types/array.html#array-types:
+            ///
+            ///   All elements of arrays are always initialized
+            unsafe {
+                Ptr::from_inner(slice)
+            }
         }
     }
 
@@ -1038,42 +1086,45 @@ mod _casts {
         {
             let (inner, remainder) =
                 self.as_inner().try_cast_into(cast_type, meta).map_err(|err| {
-                    err.map_src(|inner|
-                    // SAFETY: `PtrInner::try_cast_into` promises to return its
-                    // original argument on error, which was originally produced
-                    // by `self.as_inner()`, which is guaranteed to satisfy
-                    // `Ptr`'s invariants.
-                    unsafe { Ptr::from_inner(inner) })
+                    err.map_src(|inner| {
+                        /// SAFETY: `PtrInner::try_cast_into` promises to return its
+                        /// original argument on error, which was originally produced
+                        /// by `self.as_inner()`, which is guaranteed to satisfy
+                        /// `Ptr`'s invariants.
+                        unsafe {
+                            Ptr::from_inner(inner)
+                        }
+                    })
                 })?;
 
-            // SAFETY:
-            // 0. Since `U: Read<I::Aliasing, _>`, either:
-            //    - `I::Aliasing` is `Exclusive`, in which case both `src` and
-            //      `ptr` conform to `Exclusive`
-            //    - `I::Aliasing` is `Shared` and `U` is `Immutable` (we already
-            //      know that `[u8]: Immutable`). In this case, neither `U` nor
-            //      `[u8]` permit mutation, and so `Shared` aliasing is
-            //      satisfied.
-            // 1. `ptr` conforms to the alignment invariant of `Aligned` because
-            //    it is derived from `try_cast_into`, which promises that the
-            //    object described by `target` is validly aligned for `U`.
-            // 2. By trait bound, `self` - and thus `target` - is a bit-valid
-            //    `[u8]`. `Ptr<[u8], (_, _, Valid)>` and `Ptr<_, (_, _,
-            //    Initialized)>` have the same bit validity, and so neither
-            //    `self` nor `res` can be used to write a value to the referent
-            //    which violates the other's validity invariant.
+            /// SAFETY:
+            /// 0. Since `U: Read<I::Aliasing, _>`, either:
+            ///    - `I::Aliasing` is `Exclusive`, in which case both `src` and
+            ///      `ptr` conform to `Exclusive`
+            ///    - `I::Aliasing` is `Shared` and `U` is `Immutable` (we already
+            ///      know that `[u8]: Immutable`). In this case, neither `U` nor
+            ///      `[u8]` permit mutation, and so `Shared` aliasing is
+            ///      satisfied.
+            /// 1. `ptr` conforms to the alignment invariant of `Aligned` because
+            ///    it is derived from `try_cast_into`, which promises that the
+            ///    object described by `target` is validly aligned for `U`.
+            /// 2. By trait bound, `self` - and thus `target` - is a bit-valid
+            ///    `[u8]`. `Ptr<[u8], (_, _, Valid)>` and `Ptr<_, (_, _,
+            ///    Initialized)>` have the same bit validity, and so neither
+            ///    `self` nor `res` can be used to write a value to the referent
+            ///    which violates the other's validity invariant.
             let res = unsafe { Ptr::from_inner(inner) };
 
-            // SAFETY:
-            // 0. `self` and `remainder` both have the type `[u8]`. Thus, they
-            //    have `UnsafeCell`s at the same locations. Type casting does
-            //    not affect aliasing.
-            // 1. `[u8]` has no alignment requirement.
-            // 2. `self` has validity `Valid` and has type `[u8]`. Since
-            //    `remainder` references a subset of `self`'s referent, it is
-            //    also a bit-valid `[u8]`. Thus, neither `self` nor `remainder`
-            //    can be used to write a value to the referent which violates
-            //    the other's validity invariant.
+            /// SAFETY:
+            /// 0. `self` and `remainder` both have the type `[u8]`. Thus, they
+            ///    have `UnsafeCell`s at the same locations. Type casting does
+            ///    not affect aliasing.
+            /// 1. `[u8]` has no alignment requirement.
+            /// 2. `self` has validity `Valid` and has type `[u8]`. Since
+            ///    `remainder` references a subset of `self`'s referent, it is
+            ///    also a bit-valid `[u8]`. Thus, neither `self` nor `remainder`
+            ///    can be used to write a value to the referent which violates
+            ///    the other's validity invariant.
             let remainder = unsafe { Ptr::from_inner(remainder) };
 
             Ok((res, remainder))
@@ -1111,13 +1162,13 @@ mod _casts {
                         let slf = slf.as_bytes();
                         // Restore the initial alignment invariant of `self`.
                         //
-                        // SAFETY: The referent type of `slf` is now equal to
-                        // that of `self`, but the alignment invariants
-                        // nominally differ. Since `slf` and `self` refer to the
-                        // same memory and no actions have been taken that would
-                        // violate the original invariants on `self`, it is
-                        // sound to apply the alignment invariant of `self` onto
-                        // `slf`.
+                        /// SAFETY: The referent type of `slf` is now equal to
+                        /// that of `self`, but the alignment invariants
+                        /// nominally differ. Since `slf` and `self` refer to the
+                        /// same memory and no actions have been taken that would
+                        /// violate the original invariants on `self`, it is
+                        /// sound to apply the alignment invariant of `self` onto
+                        /// `slf`.
                         let slf = unsafe { slf.assume_alignment::<I::Alignment>() };
                         let slf = slf.unify_invariants();
                         Err(CastError::Size(SizeError::<_, U>::new(slf)))
@@ -1144,41 +1195,41 @@ mod _casts {
         #[must_use]
         #[inline(always)]
         pub fn get_mut(self) -> Ptr<'a, T, I> {
-            // SAFETY:
-            // - The closure uses an `as` cast, which preserves address range
-            //   and provenance.
-            // - Aliasing is `Exclusive`, and so we are not required to promise
-            //   anything about the locations of `UnsafeCell`s.
-            // - `UnsafeCell<T>` has the same bit validity as `T` [1].
-            //   Technically the term "representation" doesn't guarantee this,
-            //   but the subsequent sentence in the documentation makes it clear
-            //   that this is the intention.
-            //
-            //   By invariant on `Validity`, since `T` and `UnsafeCell<T>` have
-            //   the same bit validity, then the set of values which may appear
-            //   in the referent of a `Ptr<T, (_, _, V)>` is the same as the set
-            //   which may appear in the referent of a `Ptr<UnsafeCell<T>, (_,
-            //   _, V)>`. Thus, neither `self` nor `ptr` may be used to write a
-            //   value to the referent which would violate the other's validity
-            //   invariant.
-            //
-            // [1] Per https://doc.rust-lang.org/1.81.0/core/cell/struct.UnsafeCell.html#memory-layout:
-            //
-            //   `UnsafeCell<T>` has the same in-memory representation as its
-            //   inner type `T`. A consequence of this guarantee is that it is
-            //   possible to convert between `T` and `UnsafeCell<T>`.
+            /// SAFETY:
+            /// - The closure uses an `as` cast, which preserves address range
+            ///   and provenance.
+            /// - Aliasing is `Exclusive`, and so we are not required to promise
+            ///   anything about the locations of `UnsafeCell`s.
+            /// - `UnsafeCell<T>` has the same bit validity as `T` [1].
+            ///   Technically the term "representation" doesn't guarantee this,
+            ///   but the subsequent sentence in the documentation makes it clear
+            ///   that this is the intention.
+            ///
+            ///   By invariant on `Validity`, since `T` and `UnsafeCell<T>` have
+            ///   the same bit validity, then the set of values which may appear
+            ///   in the referent of a `Ptr<T, (_, _, V)>` is the same as the set
+            ///   which may appear in the referent of a `Ptr<UnsafeCell<T>, (_,
+            ///   _, V)>`. Thus, neither `self` nor `ptr` may be used to write a
+            ///   value to the referent which would violate the other's validity
+            ///   invariant.
+            ///
+            /// [1] Per https://doc.rust-lang.org/1.81.0/core/cell/struct.UnsafeCell.html#memory-layout:
+            ///
+            ///   `UnsafeCell<T>` has the same in-memory representation as its
+            ///   inner type `T`. A consequence of this guarantee is that it is
+            ///   possible to convert between `T` and `UnsafeCell<T>`.
             #[allow(clippy::as_conversions)]
             let ptr = unsafe { self.transmute_unchecked(|ptr| cast!(ptr)) };
 
-            // SAFETY: `UnsafeCell<T>` has the same alignment as `T` [1],
-            // and so if `self` is guaranteed to be aligned, then so is the
-            // returned `Ptr`.
-            //
-            // [1] Per https://doc.rust-lang.org/1.81.0/core/cell/struct.UnsafeCell.html#memory-layout:
-            //
-            //   `UnsafeCell<T>` has the same in-memory representation as
-            //   its inner type `T`. A consequence of this guarantee is that
-            //   it is possible to convert between `T` and `UnsafeCell<T>`.
+            /// SAFETY: `UnsafeCell<T>` has the same alignment as `T` [1],
+            /// and so if `self` is guaranteed to be aligned, then so is the
+            /// returned `Ptr`.
+            ///
+            /// [1] Per https://doc.rust-lang.org/1.81.0/core/cell/struct.UnsafeCell.html#memory-layout:
+            ///
+            ///   `UnsafeCell<T>` has the same in-memory representation as
+            ///   its inner type `T`. A consequence of this guarantee is that
+            ///   it is possible to convert between `T` and `UnsafeCell<T>`.
             let ptr = unsafe { ptr.assume_alignment::<I::Alignment>() };
             ptr.unify_invariants()
         }
@@ -1197,14 +1248,14 @@ mod _project {
     {
         /// Iteratively projects the elements `Ptr<T>` from `Ptr<[T]>`.
         pub(crate) fn iter(&self) -> impl Iterator<Item = Ptr<'a, T, I>> {
-            // SAFETY:
-            // 0. `elem` conforms to the aliasing invariant of `I::Aliasing`
-            //    because projection does not impact the aliasing invariant.
-            // 1. `elem`, conditionally, conforms to the validity invariant of
-            //    `I::Alignment`. If `elem` is projected from data well-aligned
-            //    for `[T]`, `elem` will be valid for `T`.
-            // 2. FIXME: Need to cite facts about `[T]`'s layout (same for the
-            //    preceding points)
+            /// SAFETY:
+            /// 0. `elem` conforms to the aliasing invariant of `I::Aliasing`
+            ///    because projection does not impact the aliasing invariant.
+            /// 1. `elem`, conditionally, conforms to the validity invariant of
+            ///    `I::Alignment`. If `elem` is projected from data well-aligned
+            ///    for `[T]`, `elem` will be valid for `T`.
+            /// 2. FIXME: Need to cite facts about `[T]`'s layout (same for the
+            ///    preceding points)
             self.as_inner().iter().map(|elem| unsafe { Ptr::from_inner(elem) })
         }
     }
@@ -1266,12 +1317,14 @@ mod tests {
                         let bytes: *const [MaybeUninit<u8>] = bytes;
                         #[allow(clippy::as_conversions)]
                         let bytes = bytes as *const [u8];
-                        // SAFETY: We just initialized these bytes to valid
-                        // `u8`s.
-                        unsafe { &*bytes }
+                        /// SAFETY: We just initialized these bytes to valid
+                        /// `u8`s.
+                        unsafe {
+                            &*bytes
+                        }
                     };
 
-                    // SAFETY: The bytes in `slf` must be initialized.
+                    /// SAFETY: The bytes in `slf` must be initialized.
                     unsafe fn validate_and_get_len<
                         T: ?Sized + KnownLayout + FromBytes + Immutable,
                     >(
@@ -1282,18 +1335,20 @@ mod tests {
                         let bytes = {
                             let len = mem::size_of_val(t);
                             let t: *const T = t;
-                            // SAFETY:
-                            // - We know `t`'s bytes are all initialized
-                            //   because we just read it from `slf`, which
-                            //   points to an initialized range of bytes. If
-                            //   there's a bug and this doesn't hold, then
-                            //   that's exactly what we're hoping Miri will
-                            //   catch!
-                            // - Since `T: FromBytes`, `T` doesn't contain
-                            //   any `UnsafeCell`s, so it's okay for `t: T`
-                            //   and a `&[u8]` to the same memory to be
-                            //   alive concurrently.
-                            unsafe { core::slice::from_raw_parts(t.cast::<u8>(), len) }
+                            /// SAFETY:
+                            /// - We know `t`'s bytes are all initialized
+                            ///   because we just read it from `slf`, which
+                            ///   points to an initialized range of bytes. If
+                            ///   there's a bug and this doesn't hold, then
+                            ///   that's exactly what we're hoping Miri will
+                            ///   catch!
+                            /// - Since `T: FromBytes`, `T` doesn't contain
+                            ///   any `UnsafeCell`s, so it's okay for `t: T`
+                            ///   and a `&[u8]` to the same memory to be
+                            ///   alive concurrently.
+                            unsafe {
+                                core::slice::from_raw_parts(t.cast::<u8>(), len)
+                            }
                         };
 
                         // This assertion ensures that `t`'s bytes are read
@@ -1311,8 +1366,8 @@ mod tests {
                             if let Ok((slf, remaining)) = Ptr::from_ref(bytes)
                                 .try_cast_into::<T, BecauseImmutable>(cast_type, meta)
                             {
-                                // SAFETY: All bytes in `bytes` have been
-                                // initialized.
+                                /// SAFETY: All bytes in `bytes` have been
+                                /// initialized.
                                 let len = unsafe { validate_and_get_len(slf) };
                                 assert_eq!(remaining.len(), bytes.len() - len);
                                 #[allow(unstable_name_collisions)]
@@ -1339,8 +1394,8 @@ mod tests {
                         if let Ok(slf) = Ptr::from_ref(bytes)
                             .try_cast_into_no_leftover::<T, BecauseImmutable>(meta)
                         {
-                            // SAFETY: All bytes in `bytes` have been
-                            // initialized.
+                            /// SAFETY: All bytes in `bytes` have been
+                            /// initialized.
                             let len = unsafe { validate_and_get_len(slf) };
                             assert_eq!(len, bytes.len());
 

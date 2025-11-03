@@ -101,18 +101,18 @@ macro_rules! transmute {
                 dst: ManuallyDrop<Dst>,
             }
 
-            // SAFETY: `Transmute` is a `repr(C)` union whose `src` field has
-            // type `ManuallyDrop<Src>`. Thus, the `src` field starts at byte
-            // offset 0 within `Transmute` [1]. `ManuallyDrop<T>` has the same
-            // layout and bit validity as `T`, so it is sound to transmute `Src`
-            // to `Transmute`.
-            //
-            // [1] https://doc.rust-lang.org/1.85.0/reference/type-layout.html#reprc-unions
-            //
-            // [2] Per https://doc.rust-lang.org/1.85.0/std/mem/struct.ManuallyDrop.html:
-            //
-            //   `ManuallyDrop<T>` is guaranteed to have the same layout and bit
-            //   validity as `T`
+            /// SAFETY: `Transmute` is a `repr(C)` union whose `src` field has
+            /// type `ManuallyDrop<Src>`. Thus, the `src` field starts at byte
+            /// offset 0 within `Transmute` [1]. `ManuallyDrop<T>` has the same
+            /// layout and bit validity as `T`, so it is sound to transmute `Src`
+            /// to `Transmute`.
+            ///
+            /// [1] https://doc.rust-lang.org/1.85.0/reference/type-layout.html#reprc-unions
+            ///
+            /// [2] Per https://doc.rust-lang.org/1.85.0/std/mem/struct.ManuallyDrop.html:
+            ///
+            ///   `ManuallyDrop<T>` is guaranteed to have the same layout and bit
+            ///   validity as `T`
             let u: Transmute<_, _> = unsafe {
                 // Clippy: We can't annotate the types; this macro is designed
                 // to infer the types from the calling context.
@@ -121,30 +121,32 @@ macro_rules! transmute {
             };
 
             if false {
-                // SAFETY: This code is never executed.
-                e = ManuallyDrop::into_inner(unsafe { u.src });
+                /// SAFETY: This code is never executed.
+                {
+                    e = ManuallyDrop::into_inner(unsafe { u.src });
+                }
                 // Suppress the `unused_assignments` lint on the previous line.
                 let _ = e;
                 loop {}
             } else {
-                // SAFETY: Per the safety comment on `let u` above, the `dst`
-                // field in `Transmute` starts at byte offset 0, and has the
-                // same layout and bit validity as `Dst`.
-                //
-                // Transmuting `Src` to `Transmute<Src, Dst>` above using
-                // `core::mem::transmute` ensures that `size_of::<Src>() ==
-                // size_of::<Transmute<Src, Dst>>()`. A `#[repr(C, packed)]`
-                // union has the maximum size of all of its fields [1], so this
-                // is equivalent to `size_of::<Src>() >= size_of::<Dst>()`.
-                //
-                // The outer `if`'s `false` branch ensures that `Src: IntoBytes`
-                // and `Dst: FromBytes`. This, combined with the size bound,
-                // ensures that this transmute is sound.
-                //
-                // [1] Per https://doc.rust-lang.org/1.85.0/reference/type-layout.html#reprc-unions:
-                //
-                //   The union will have a size of the maximum size of all of
-                //   its fields rounded to its alignment
+                /// SAFETY: Per the safety comment on `let u` above, the `dst`
+                /// field in `Transmute` starts at byte offset 0, and has the
+                /// same layout and bit validity as `Dst`.
+                ///
+                /// Transmuting `Src` to `Transmute<Src, Dst>` above using
+                /// `core::mem::transmute` ensures that `size_of::<Src>() ==
+                /// size_of::<Transmute<Src, Dst>>()`. A `#[repr(C, packed)]`
+                /// union has the maximum size of all of its fields [1], so this
+                /// is equivalent to `size_of::<Src>() >= size_of::<Dst>()`.
+                ///
+                /// The outer `if`'s `false` branch ensures that `Src: IntoBytes`
+                /// and `Dst: FromBytes`. This, combined with the size bound,
+                /// ensures that this transmute is sound.
+                ///
+                /// [1] Per https://doc.rust-lang.org/1.85.0/reference/type-layout.html#reprc-unions:
+                ///
+                ///   The union will have a size of the maximum size of all of
+                ///   its fields rounded to its alignment
                 let dst = unsafe { u.dst };
                 $crate::util::macro_util::must_use(ManuallyDrop::into_inner(dst))
             }
@@ -169,10 +171,10 @@ macro_rules! transmute {
             #[allow(unreachable_code)]
             transmute(e)
         } else {
-            // SAFETY: `core::mem::transmute` ensures that the type of `e` and
-            // the type of this macro invocation expression have the same size.
-            // We know this transmute is safe thanks to the `IntoBytes` and
-            // `FromBytes` bounds enforced by the `false` branch.
+            /// SAFETY: `core::mem::transmute` ensures that the type of `e` and
+            /// the type of this macro invocation expression have the same size.
+            /// We know this transmute is safe thanks to the `IntoBytes` and
+            /// `FromBytes` bounds enforced by the `false` branch.
             let u = unsafe {
                 // Clippy: We can't annotate the types; this macro is designed
                 // to infer the types from the calling context.
@@ -348,9 +350,9 @@ macro_rules! transmute_ref {
         } else {
             use $crate::util::macro_util::TransmuteRefDst;
             let t = $crate::util::macro_util::Wrap::new(e);
-            // SAFETY: The `if false` branch ensures that:
-            // - `Src: IntoBytes + Immutable`
-            // - `Dst: FromBytes + Immutable`
+            /// SAFETY: The `if false` branch ensures that:
+            /// - `Src: IntoBytes + Immutable`
+            /// - `Dst: FromBytes + Immutable`
             unsafe {
                 t.transmute_ref()
             }
@@ -564,7 +566,7 @@ macro_rules! try_transmute {
             // Check that the sizes of the source and destination types are
             // equal.
 
-            // SAFETY: This code is never executed.
+            /// SAFETY: This code is never executed.
             Ok(unsafe {
                 // Clippy: We can't annotate the types; this macro is designed
                 // to infer the types from the calling context.
@@ -884,7 +886,7 @@ macro_rules! cryptocorrosion_derive_traits {
             }
         )?
 
-        // SAFETY: See inline.
+        /// SAFETY: See inline.
         unsafe impl $(<$($tyvar),*>)? $crate::TryFromBytes for $name$(<$($tyvar),*>)?
         where
             $(
@@ -899,20 +901,20 @@ macro_rules! cryptocorrosion_derive_traits {
             where
                 A: $crate::pointer::invariant::Reference
             {
-                // SAFETY: This macro only accepts `#[repr(C)]` and
-                // `#[repr(transparent)]` structs, and this `impl` block
-                // requires all field types to be `FromBytes`. Thus, all
-                // initialized byte sequences constitutes valid instances of
-                // `Self`.
+                /// SAFETY: This macro only accepts `#[repr(C)]` and
+                /// `#[repr(transparent)]` structs, and this `impl` block
+                /// requires all field types to be `FromBytes`. Thus, all
+                /// initialized byte sequences constitutes valid instances of
+                /// `Self`.
                 true
             }
 
             fn only_derive_is_allowed_to_implement_this_trait() {}
         }
 
-        // SAFETY: This macro only accepts `#[repr(C)]` and
-        // `#[repr(transparent)]` structs, and this `impl` block requires all
-        // field types to be `FromBytes`, which is a sub-trait of `FromZeros`.
+        /// SAFETY: This macro only accepts `#[repr(C)]` and
+        /// `#[repr(transparent)]` structs, and this `impl` block requires all
+        /// field types to be `FromBytes`, which is a sub-trait of `FromZeros`.
         unsafe impl $(<$($tyvar),*>)? $crate::FromZeros for $name$(<$($tyvar),*>)?
         where
             $(
@@ -926,9 +928,9 @@ macro_rules! cryptocorrosion_derive_traits {
             fn only_derive_is_allowed_to_implement_this_trait() {}
         }
 
-        // SAFETY: This macro only accepts `#[repr(C)]` and
-        // `#[repr(transparent)]` structs, and this `impl` block requires all
-        // field types to be `FromBytes`.
+        /// SAFETY: This macro only accepts `#[repr(C)]` and
+        /// `#[repr(transparent)]` structs, and this `impl` block requires all
+        /// field types to be `FromBytes`.
         unsafe impl $(<$($tyvar),*>)? $crate::FromBytes for $name$(<$($tyvar),*>)?
         where
             $(
@@ -942,10 +944,10 @@ macro_rules! cryptocorrosion_derive_traits {
             fn only_derive_is_allowed_to_implement_this_trait() {}
         }
 
-        // SAFETY: This macro only accepts `#[repr(C)]` and
-        // `#[repr(transparent)]` structs, this `impl` block requires all field
-        // types to be `IntoBytes`, and a padding check is used to ensures that
-        // there are no padding bytes.
+        /// SAFETY: This macro only accepts `#[repr(C)]` and
+        /// `#[repr(transparent)]` structs, this `impl` block requires all field
+        /// types to be `IntoBytes`, and a padding check is used to ensures that
+        /// there are no padding bytes.
         unsafe impl $(<$($tyvar),*>)? $crate::IntoBytes for $name$(<$($tyvar),*>)?
         where
             $(
@@ -970,9 +972,9 @@ macro_rules! cryptocorrosion_derive_traits {
             fn only_derive_is_allowed_to_implement_this_trait() {}
         }
 
-        // SAFETY: This macro only accepts `#[repr(C)]` and
-        // `#[repr(transparent)]` structs, and this `impl` block requires all
-        // field types to be `Immutable`.
+        /// SAFETY: This macro only accepts `#[repr(C)]` and
+        /// `#[repr(transparent)]` structs, and this `impl` block requires all
+        /// field types to be `Immutable`.
         unsafe impl $(<$($tyvar),*>)? $crate::Immutable for $name$(<$($tyvar),*>)?
         where
             $(
@@ -996,9 +998,9 @@ macro_rules! cryptocorrosion_derive_traits {
         $(($($tuple_field_ty:ty),*))?
         $({$($field_ty:ty),*})?
     ) => {
-        // SAFETY: `#[repr(transparent)]` structs cannot have the same layout as
-        // their single non-zero-sized field, and so cannot have any padding
-        // outside of that field.
+        /// SAFETY: `#[repr(transparent)]` structs cannot have the same layout as
+        /// their single non-zero-sized field, and so cannot have any padding
+        /// outside of that field.
         0
     };
     (
@@ -1031,7 +1033,7 @@ macro_rules! cryptocorrosion_derive_traits {
             )*
         }
 
-        // SAFETY: See inline.
+        /// SAFETY: See inline.
         unsafe impl $crate::TryFromBytes for $name
         where
             $(
@@ -1042,19 +1044,19 @@ macro_rules! cryptocorrosion_derive_traits {
             where
                 A: $crate::pointer::invariant::Reference
             {
-                // SAFETY: This macro only accepts `#[repr(C)]` unions, and this
-                // `impl` block requires all field types to be `FromBytes`.
-                // Thus, all initialized byte sequences constitutes valid
-                // instances of `Self`.
+                /// SAFETY: This macro only accepts `#[repr(C)]` unions, and this
+                /// `impl` block requires all field types to be `FromBytes`.
+                /// Thus, all initialized byte sequences constitutes valid
+                /// instances of `Self`.
                 true
             }
 
             fn only_derive_is_allowed_to_implement_this_trait() {}
         }
 
-        // SAFETY: This macro only accepts `#[repr(C)]` unions, and this `impl`
-        // block requires all field types to be `FromBytes`, which is a
-        // sub-trait of `FromZeros`.
+        /// SAFETY: This macro only accepts `#[repr(C)]` unions, and this `impl`
+        /// block requires all field types to be `FromBytes`, which is a
+        /// sub-trait of `FromZeros`.
         unsafe impl $crate::FromZeros for $name
         where
             $(
@@ -1064,8 +1066,8 @@ macro_rules! cryptocorrosion_derive_traits {
             fn only_derive_is_allowed_to_implement_this_trait() {}
         }
 
-        // SAFETY: This macro only accepts `#[repr(C)]` unions, and this `impl`
-        // block requires all field types to be `FromBytes`.
+        /// SAFETY: This macro only accepts `#[repr(C)]` unions, and this `impl`
+        /// block requires all field types to be `FromBytes`.
         unsafe impl $crate::FromBytes for $name
         where
             $(
@@ -1075,10 +1077,10 @@ macro_rules! cryptocorrosion_derive_traits {
             fn only_derive_is_allowed_to_implement_this_trait() {}
         }
 
-        // SAFETY: This macro only accepts `#[repr(C)]` unions, this `impl`
-        // block requires all field types to be `IntoBytes`, and a padding check
-        // is used to ensures that there are no padding bytes before or after
-        // any field.
+        /// SAFETY: This macro only accepts `#[repr(C)]` unions, this `impl`
+        /// block requires all field types to be `IntoBytes`, and a padding check
+        /// is used to ensures that there are no padding bytes before or after
+        /// any field.
         unsafe impl $crate::IntoBytes for $name
         where
             $(
@@ -1097,8 +1099,8 @@ macro_rules! cryptocorrosion_derive_traits {
             fn only_derive_is_allowed_to_implement_this_trait() {}
         }
 
-        // SAFETY: This macro only accepts `#[repr(C)]` unions, and this `impl`
-        // block requires all field types to be `Immutable`.
+        /// SAFETY: This macro only accepts `#[repr(C)]` unions, and this `impl`
+        /// block requires all field types to be `Immutable`.
         unsafe impl $crate::Immutable for $name
         where
             $(

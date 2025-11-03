@@ -249,18 +249,18 @@ pub(crate) fn derive_is_bit_valid(
         } else {
             quote! {
                 #tag_ident => {
-                    // SAFETY:
-                    // - This cast is from a `repr(C)` union which has a field
-                    //   of type `variant_struct_ident` to that variant struct
-                    //   type itself. This addresses a subset of the bytes
-                    //   addressed by `variants`.
-                    // - The returned pointer is cast from `p`, and so has the
-                    //   same provenance as `p`.
-                    // - We checked that the tag of the enum matched the
-                    //   constant for this variant, so this cast preserves
-                    //   types and locations of all fields. Therefore, any
-                    //   `UnsafeCell`s will have the same location as in the
-                    //   original type.
+                    /// SAFETY:
+                    /// - This cast is from a `repr(C)` union which has a field
+                    ///   of type `variant_struct_ident` to that variant struct
+                    ///   type itself. This addresses a subset of the bytes
+                    ///   addressed by `variants`.
+                    /// - The returned pointer is cast from `p`, and so has the
+                    ///   same provenance as `p`.
+                    /// - We checked that the tag of the enum matched the
+                    ///   constant for this variant, so this cast preserves
+                    ///   types and locations of all fields. Therefore, any
+                    ///   `UnsafeCell`s will have the same location as in the
+                    ///   original type.
                     let variant = unsafe {
                         variants.cast_unsized_unchecked(
                             |p: #zerocopy_crate::pointer::PtrInner<'_, ___ZerocopyVariants #ty_generics>| {
@@ -268,9 +268,9 @@ pub(crate) fn derive_is_bit_valid(
                             }
                         )
                     };
-                    // SAFETY: `cast_unsized_unchecked` removes the
-                    // initialization invariant from `p`, so we re-assert that
-                    // all of the bytes are initialized.
+                    /// SAFETY: `cast_unsized_unchecked` removes the
+                    /// initialization invariant from `p`, so we re-assert that
+                    /// all of the bytes are initialized.
                     let variant = unsafe { variant.assume_initialized() };
                     <
                         #variant_struct_ident #ty_generics as #trait_path
@@ -281,10 +281,10 @@ pub(crate) fn derive_is_bit_valid(
     });
 
     Ok(quote! {
-        // SAFETY: We use `is_bit_valid` to validate that the bit pattern of the
-        // enum's tag corresponds to one of the enum's discriminants. Then, we
-        // check the bit validity of each field of the corresponding variant.
-        // Thus, this is a sound implementation of `is_bit_valid`.
+        /// SAFETY: We use `is_bit_valid` to validate that the bit pattern of the
+        /// enum's tag corresponds to one of the enum's discriminants. Then, we
+        /// check the bit validity of each field of the corresponding variant.
+        /// Thus, this is a sound implementation of `is_bit_valid`.
         fn is_bit_valid<___ZerocopyAliasing>(
             mut candidate: #zerocopy_crate::Maybe<'_, Self, ___ZerocopyAliasing>,
         ) -> #zerocopy_crate::util::macro_util::core_reexport::primitive::bool
@@ -315,62 +315,62 @@ pub(crate) fn derive_is_bit_valid(
             }
 
             let tag = {
-                // SAFETY:
-                // - The provided cast addresses a subset of the bytes addressed
-                //   by `candidate` because it addresses the starting tag of the
-                //   enum.
-                // - Because the pointer is cast from `candidate`, it has the
-                //   same provenance as it.
-                // - There are no `UnsafeCell`s in the tag because it is a
-                //   primitive integer.
+                /// SAFETY:
+                /// - The provided cast addresses a subset of the bytes addressed
+                ///   by `candidate` because it addresses the starting tag of the
+                ///   enum.
+                /// - Because the pointer is cast from `candidate`, it has the
+                ///   same provenance as it.
+                /// - There are no `UnsafeCell`s in the tag because it is a
+                ///   primitive integer.
                 let tag_ptr = unsafe {
                     candidate.reborrow().cast_unsized_unchecked(|p: #zerocopy_crate::pointer::PtrInner<'_, Self>| {
                         p.cast_sized::<___ZerocopyTagPrimitive>()
                     })
                 };
-                // SAFETY: `tag_ptr` is casted from `candidate`, whose referent
-                // is `Initialized`. Since we have not written uninitialized
-                // bytes into the referent, `tag_ptr` is also `Initialized`.
+                /// SAFETY: `tag_ptr` is casted from `candidate`, whose referent
+                /// is `Initialized`. Since we have not written uninitialized
+                /// bytes into the referent, `tag_ptr` is also `Initialized`.
                 let tag_ptr = unsafe { tag_ptr.assume_initialized() };
                 tag_ptr.recall_validity::<_, (_, (_, _))>().read_unaligned::<#zerocopy_crate::BecauseImmutable>()
             };
 
-            // SAFETY:
-            // - The raw enum has the same fields in the same locations as the
-            //   input enum, and may have a lower alignment. This guarantees
-            //   that it addresses a subset of the bytes addressed by
-            //   `candidate`.
-            // - The returned pointer is cast from `p`, and so has the same
-            //   provenance as `p`.
-            // - The raw enum has the same types at the same locations as the
-            //   original enum, and so preserves the locations of any
-            //   `UnsafeCell`s.
+            /// SAFETY:
+            /// - The raw enum has the same fields in the same locations as the
+            ///   input enum, and may have a lower alignment. This guarantees
+            ///   that it addresses a subset of the bytes addressed by
+            ///   `candidate`.
+            /// - The returned pointer is cast from `p`, and so has the same
+            ///   provenance as `p`.
+            /// - The raw enum has the same types at the same locations as the
+            ///   original enum, and so preserves the locations of any
+            ///   `UnsafeCell`s.
             let raw_enum = unsafe {
                 candidate.cast_unsized_unchecked(|p: #zerocopy_crate::pointer::PtrInner<'_, Self>| {
                     p.cast_sized::<___ZerocopyRawEnum #ty_generics>()
                 })
             };
-            // SAFETY: `cast_unsized_unchecked` removes the initialization
-            // invariant from `p`, so we re-assert that all of the bytes are
-            // initialized.
+            /// SAFETY: `cast_unsized_unchecked` removes the initialization
+            /// invariant from `p`, so we re-assert that all of the bytes are
+            /// initialized.
             let raw_enum = unsafe { raw_enum.assume_initialized() };
-            // SAFETY:
-            // - This projection returns a subfield of `this` using
-            //   `addr_of_mut!`.
-            // - Because the subfield pointer is derived from `this`, it has the
-            //   same provenance.
-            // - The locations of `UnsafeCell`s in the subfield match the
-            //   locations of `UnsafeCell`s in `this`. This is because the
-            //   subfield pointer just points to a smaller portion of the
-            //   overall struct.
+            /// SAFETY:
+            /// - This projection returns a subfield of `this` using
+            ///   `addr_of_mut!`.
+            /// - Because the subfield pointer is derived from `this`, it has the
+            ///   same provenance.
+            /// - The locations of `UnsafeCell`s in the subfield match the
+            ///   locations of `UnsafeCell`s in `this`. This is because the
+            ///   subfield pointer just points to a smaller portion of the
+            ///   overall struct.
             let variants = unsafe {
                 use #zerocopy_crate::pointer::PtrInner;
                 raw_enum.cast_unsized_unchecked(|p: PtrInner<'_, ___ZerocopyRawEnum #ty_generics>| {
                     let p = p.as_non_null().as_ptr();
                     let ptr = core_reexport::ptr::addr_of_mut!((*p).variants);
-                    // SAFETY: `ptr` is a projection into `p`, which is
-                    // `NonNull`, and guaranteed not to wrap around the address
-                    // space. Thus, `ptr` cannot be null.
+                    /// SAFETY: `ptr` is a projection into `p`, which is
+                    /// `NonNull`, and guaranteed not to wrap around the address
+                    /// space. Thus, `ptr` cannot be null.
                     let ptr = unsafe { core_reexport::ptr::NonNull::new_unchecked(ptr) };
                     unsafe { PtrInner::new(ptr) }
                 })

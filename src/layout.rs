@@ -191,10 +191,10 @@ impl DstLayout {
     #[must_use]
     #[inline]
     pub const fn for_type<T>() -> DstLayout {
-        // SAFETY: `align` is correct by construction. `T: Sized`, and so it is
-        // sound to initialize `size_info` to `SizeInfo::Sized { size }`; the
-        // `size` field is also correct by construction. `unpadded` can safely
-        // default to `false`.
+        /// SAFETY: `align` is correct by construction. `T: Sized`, and so it is
+        /// sound to initialize `size_info` to `SizeInfo::Sized { size }`; the
+        /// `size` field is also correct by construction. `unpadded` can safely
+        /// default to `false`.
         DstLayout {
             align: match NonZeroUsize::new(mem::align_of::<T>()) {
                 Some(align) => align,
@@ -224,14 +224,14 @@ impl DstLayout {
     ///
     /// Unsafe code may assume that `DstLayout` is the correct layout for `[T]`.
     pub(crate) const fn for_slice<T>() -> DstLayout {
-        // SAFETY: The alignment of a slice is equal to the alignment of its
-        // element type, and so `align` is initialized correctly.
-        //
-        // Since this is just a slice type, there is no offset between the
-        // beginning of the type and the beginning of the slice, so it is
-        // correct to set `offset: 0`. The `elem_size` is correct by
-        // construction. Since `[T]` is a (degenerate case of a) slice DST, it
-        // is correct to initialize `size_info` to `SizeInfo::SliceDst`.
+        /// SAFETY: The alignment of a slice is equal to the alignment of its
+        /// element type, and so `align` is initialized correctly.
+        ///
+        /// Since this is just a slice type, there is no offset between the
+        /// beginning of the type and the beginning of the slice, so it is
+        /// correct to set `offset: 0`. The `elem_size` is correct by
+        /// construction. Since `[T]` is a (degenerate case of a) slice DST, it
+        /// is correct to initialize `size_info` to `SizeInfo::SliceDst`.
         DstLayout {
             align: match NonZeroUsize::new(mem::align_of::<T>()) {
                 Some(align) => align,
@@ -279,18 +279,18 @@ impl DstLayout {
 
         layout = layout.pad_to_align();
 
-        // SAFETY: `layout` accurately describes the layout of a `repr(C)`
-        // struct with `repr_align` or `repr_packed` alignment modifications and
-        // the given `fields`. The `layout` is constructed using a sequence of
-        // invocations of `DstLayout::{new_zst,extend,pad_to_align}`. The
-        // documentation of these items vows that invocations in this manner
-        // will accurately describe a type, so long as:
-        //
-        //  - that type is `repr(C)`,
-        //  - its fields are enumerated in the order they appear,
-        //  - the presence of `repr_align` and `repr_packed` are correctly accounted for.
-        //
-        // We respect all three of these preconditions above.
+        /// SAFETY: `layout` accurately describes the layout of a `repr(C)`
+        /// struct with `repr_align` or `repr_packed` alignment modifications and
+        /// the given `fields`. The `layout` is constructed using a sequence of
+        /// invocations of `DstLayout::{new_zst,extend,pad_to_align}`. The
+        /// documentation of these items vows that invocations in this manner
+        /// will accurately describe a type, so long as:
+        ///
+        ///  - that type is `repr(C)`,
+        ///  - its fields are enumerated in the order they appear,
+        ///  - the presence of `repr_align` and `repr_packed` are correctly accounted for.
+        ///
+        /// We respect all three of these preconditions above.
         layout
     }
 
@@ -875,11 +875,11 @@ mod cast_from_raw {
                 #[allow(clippy::arithmetic_side_effects)]
                 let elem_multiple = src.elem_size / dst_elem_size.get();
 
-                // SAFETY: We checked above that `src.align >= dst.align`.
+                /// SAFETY: We checked above that `src.align >= dst.align`.
                 Some(CastParams {
-                    // SAFETY: We checked above that this is an exact ratio.
+                    /// SAFETY: We checked above that this is an exact ratio.
                     offset_delta_elems,
-                    // SAFETY: We checked above that this is an exact ratio.
+                    /// SAFETY: We checked above that this is an exact ratio.
                     elem_multiple,
                 })
             }
@@ -895,14 +895,14 @@ mod cast_from_raw {
                 #[allow(unused)]
                 use crate::util::polyfills::*;
 
-                // SAFETY: `self` is a witness that the following equation
-                // holds:
-                //
-                //   D_OFF + d_meta * D_ELEM = S_OFF + s_meta * S_ELEM
-                //
-                // Since the caller promises that `src_meta` is valid `Src`
-                // metadata, this math will not overflow, and the returned value
-                // will describe a `Dst` of the same size.
+                /// SAFETY: `self` is a witness that the following equation
+                /// holds:
+                ///
+                ///   D_OFF + d_meta * D_ELEM = S_OFF + s_meta * S_ELEM
+                ///
+                /// Since the caller promises that `src_meta` is valid `Src`
+                /// metadata, this math will not overflow, and the returned value
+                /// will describe a `Dst` of the same size.
                 #[allow(unstable_name_collisions)]
                 unsafe {
                     self.offset_delta_elems
@@ -932,19 +932,21 @@ mod cast_from_raw {
         let src_meta = <Src as KnownLayout>::pointer_to_metadata(src.as_non_null().as_ptr());
         let params = <Dst as Params<Src>>::CAST_PARAMS;
 
-        // SAFETY: `src: PtrInner`, and so by invariant on `PtrInner`, `src`'s
-        // referent is no larger than `isize::MAX`.
+        /// SAFETY: `src: PtrInner`, and so by invariant on `PtrInner`, `src`'s
+        /// referent is no larger than `isize::MAX`.
         let dst_meta = unsafe { params.cast_metadata(src_meta) };
 
         let dst = <Dst as KnownLayout>::raw_from_ptr_len(src.as_non_null().cast(), dst_meta);
 
-        // SAFETY: By post-condition on `params.cast_metadata`, `dst` addresses
-        // the same number of bytes as `src`. Since `src: PtrInner`, `src` has
-        // provenance for its entire referent, which lives inside of a single
-        // allocation. Since `dst` has the same address as `src` and was
-        // constructed using provenance-preserving operations, it addresses a
-        // subset of those bytes, and has provenance for those bytes.
-        unsafe { PtrInner::new(dst) }
+        /// SAFETY: By post-condition on `params.cast_metadata`, `dst` addresses
+        /// the same number of bytes as `src`. Since `src: PtrInner`, `src` has
+        /// provenance for its entire referent, which lives inside of a single
+        /// allocation. Since `dst` has the same address as `src` and was
+        /// constructed using provenance-preserving operations, it addresses a
+        /// subset of those bytes, and has provenance for those bytes.
+        unsafe {
+            PtrInner::new(dst)
+        }
     }
 }
 
@@ -1495,15 +1497,15 @@ mod tests {
 
                 if let Some(addr_of_slice_field) = addr_of_slice_field {
                     let slc_field_ptr = addr_of_slice_field(ptr).as_ptr();
-                    // SAFETY: Both `slc_field_ptr` and `ptr` are pointers to
-                    // the same valid Rust object.
-                    // Work around https://github.com/rust-lang/rust-clippy/issues/12280
+                    /// SAFETY: Both `slc_field_ptr` and `ptr` are pointers to
+                    /// the same valid Rust object.
+                    /// Work around https://github.com/rust-lang/rust-clippy/issues/12280
                     let offset: usize =
                         unsafe { slc_field_ptr.byte_offset_from(ptr.as_ptr()).try_into().unwrap() };
                     assert_eq!(offset, args.offset);
                 }
 
-                // SAFETY: `ptr` points to a valid `T`.
+                /// SAFETY: `ptr` points to a valid `T`.
                 let (size, align) = unsafe {
                     (mem::size_of_val_raw(ptr.as_ptr()), mem::align_of_val_raw(ptr.as_ptr()))
                 };
@@ -1569,7 +1571,7 @@ mod tests {
                             // count, we still expect it to have the same
                             // size.
                             let got_ptr = with_elems(got_elems);
-                            // SAFETY: `got_ptr` is a pointer to a valid `T`.
+                            /// SAFETY: `got_ptr` is a pointer to a valid `T`.
                             let size_of_got_ptr = unsafe { mem::size_of_val_raw(got_ptr.as_ptr()) };
                             assert_eq!(size_of_got_ptr, size, "{}", assert_msg);
                         }
@@ -1617,8 +1619,8 @@ mod tests {
                         #[allow(unused)]
                         let f = None::<fn(NonNull<Foo>) -> NonNull<u8>>;
                         $(
-                            // SAFETY: `test` promises to only call `f` with a `ptr`
-                            // to a valid `Foo`.
+                            /// SAFETY: `test` promises to only call `f` with a `ptr`
+                            /// to a valid `Foo`.
                             let f: Option<fn(NonNull<Foo>) -> NonNull<u8>> = Some(|ptr: NonNull<Foo>| unsafe {
                                 NonNull::new(ptr::addr_of_mut!((*ptr.as_ptr()).1)).unwrap().cast::<u8>()
                             });

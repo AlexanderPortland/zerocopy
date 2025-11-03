@@ -147,18 +147,18 @@ pub const ALIGNED_64K_ALLOCATION: NonNull<[u8]> = {
     const REF: &Aligned64kAllocation = &Aligned64kAllocation([0; _64K]);
     let ptr: *const Aligned64kAllocation = REF;
     let ptr: *const [u8] = ptr::slice_from_raw_parts(ptr.cast(), _64K);
-    // SAFETY:
-    // - `ptr` is derived from a Rust reference, which is guaranteed to be
-    //   non-null.
-    // - `ptr` is derived from an `&Aligned64kAllocation`, which has size and
-    //   alignment `_64K` as promised. Its length is initialized to `_64K`,
-    //   which means that it refers to the entire allocation.
-    // - `ptr` is derived from a Rust reference, which is guaranteed to have
-    //   valid provenance.
-    //
-    // FIXME(#429): Once `NonNull::new_unchecked` docs document that it
-    // preserves provenance, cite those docs.
-    // FIXME: Replace this `as` with `ptr.cast_mut()` once our MSRV >= 1.65
+    /// SAFETY:
+    /// - `ptr` is derived from a Rust reference, which is guaranteed to be
+    ///   non-null.
+    /// - `ptr` is derived from an `&Aligned64kAllocation`, which has size and
+    ///   alignment `_64K` as promised. Its length is initialized to `_64K`,
+    ///   which means that it refers to the entire allocation.
+    /// - `ptr` is derived from a Rust reference, which is guaranteed to have
+    ///   valid provenance.
+    ///
+    /// FIXME(#429): Once `NonNull::new_unchecked` docs document that it
+    /// preserves provenance, cite those docs.
+    /// FIXME: Replace this `as` with `ptr.cast_mut()` once our MSRV >= 1.65
     #[allow(clippy::as_conversions)]
     unsafe {
         NonNull::new_unchecked(ptr as *mut _)
@@ -184,18 +184,18 @@ macro_rules! trailing_field_offset {
                         .cast_const(),
                     0,
                 );
-            // SAFETY:
-            // - If `$ty` is `Sized`, `size_of_val_raw` is always safe to call.
-            // - Otherwise:
-            //   - If `$ty` is not a slice DST, this pointer conversion will
-            //     fail due to "mismatched vtable kinds", and compilation will
-            //     fail.
-            //   - If `$ty` is a slice DST, we have constructed `zero_elems` to
-            //     have zero trailing slice elements. Per the `size_of_val_raw`
-            //     docs, "For the special case where the dynamic tail length is
-            //     0, this function is safe to call." [1]
-            //
-            // [1] https://doc.rust-lang.org/nightly/std/mem/fn.size_of_val_raw.html
+            /// SAFETY:
+            /// - If `$ty` is `Sized`, `size_of_val_raw` is always safe to call.
+            /// - Otherwise:
+            ///   - If `$ty` is not a slice DST, this pointer conversion will
+            ///     fail due to "mismatched vtable kinds", and compilation will
+            ///     fail.
+            ///   - If `$ty` is a slice DST, we have constructed `zero_elems` to
+            ///     have zero trailing slice elements. Per the `size_of_val_raw`
+            ///     docs, "For the special case where the dynamic tail length is
+            ///     0, this function is safe to call." [1]
+            ///
+            /// [1] https://doc.rust-lang.org/nightly/std/mem/fn.size_of_val_raw.html
             unsafe {
                 #[allow(clippy::as_conversions)]
                 $crate::util::macro_util::core_reexport::mem::size_of_val_raw(
@@ -209,48 +209,48 @@ macro_rules! trailing_field_offset {
         #[allow(clippy::as_conversions)]
         let ptr = ALIGNED_64K_ALLOCATION.as_ptr() as *const $ty;
 
-        // SAFETY:
-        // - Thanks to the preceding `assert!`, we know that the value with zero
-        //   elements fits in `_64K` bytes, and thus in the allocation addressed
-        //   by `ALIGNED_64K_ALLOCATION`. The offset of the trailing field is
-        //   guaranteed to be no larger than this size, so this field projection
-        //   is guaranteed to remain in-bounds of its allocation.
-        // - Because the minimum size is no larger than `_64K` bytes, and
-        //   because an object's size must always be a multiple of its alignment
-        //   [1], we know that `$ty`'s alignment is no larger than `_64K`. The
-        //   allocation addressed by `ALIGNED_64K_ALLOCATION` is guaranteed to
-        //   be aligned to `_64K`, so `ptr` is guaranteed to satisfy `$ty`'s
-        //   alignment.
-        // - As required by `addr_of!`, we do not write through `field`.
-        //
-        //   Note that, as of [2], this requirement is technically unnecessary
-        //   for Rust versions >= 1.75.0, but no harm in guaranteeing it anyway
-        //   until we bump our MSRV.
-        //
-        // [1] Per https://doc.rust-lang.org/reference/type-layout.html:
-        //
-        //   The size of a value is always a multiple of its alignment.
-        //
-        // [2] https://github.com/rust-lang/reference/pull/1387
+        /// SAFETY:
+        /// - Thanks to the preceding `assert!`, we know that the value with zero
+        ///   elements fits in `_64K` bytes, and thus in the allocation addressed
+        ///   by `ALIGNED_64K_ALLOCATION`. The offset of the trailing field is
+        ///   guaranteed to be no larger than this size, so this field projection
+        ///   is guaranteed to remain in-bounds of its allocation.
+        /// - Because the minimum size is no larger than `_64K` bytes, and
+        ///   because an object's size must always be a multiple of its alignment
+        ///   [1], we know that `$ty`'s alignment is no larger than `_64K`. The
+        ///   allocation addressed by `ALIGNED_64K_ALLOCATION` is guaranteed to
+        ///   be aligned to `_64K`, so `ptr` is guaranteed to satisfy `$ty`'s
+        ///   alignment.
+        /// - As required by `addr_of!`, we do not write through `field`.
+        ///
+        ///   Note that, as of [2], this requirement is technically unnecessary
+        ///   for Rust versions >= 1.75.0, but no harm in guaranteeing it anyway
+        ///   until we bump our MSRV.
+        ///
+        /// [1] Per https://doc.rust-lang.org/reference/type-layout.html:
+        ///
+        ///   The size of a value is always a multiple of its alignment.
+        ///
+        /// [2] https://github.com/rust-lang/reference/pull/1387
         let field = unsafe {
             $crate::util::macro_util::core_reexport::ptr::addr_of!((*ptr).$trailing_field_name)
         };
-        // SAFETY:
-        // - Both `ptr` and `field` are derived from the same allocated object.
-        // - By the preceding safety comment, `field` is in bounds of that
-        //   allocated object.
-        // - The distance, in bytes, between `ptr` and `field` is required to be
-        //   a multiple of the size of `u8`, which is trivially true because
-        //   `u8`'s size is 1.
-        // - The distance, in bytes, cannot overflow `isize`. This is guaranteed
-        //   because no allocated object can have a size larger than can fit in
-        //   `isize`. [1]
-        // - The distance being in-bounds cannot rely on wrapping around the
-        //   address space. This is guaranteed because the same is guaranteed of
-        //   allocated objects. [1]
-        //
-        // [1] FIXME(#429), FIXME(https://github.com/rust-lang/rust/pull/116675):
-        //     Once these are guaranteed in the Reference, cite it.
+        /// SAFETY:
+        /// - Both `ptr` and `field` are derived from the same allocated object.
+        /// - By the preceding safety comment, `field` is in bounds of that
+        ///   allocated object.
+        /// - The distance, in bytes, between `ptr` and `field` is required to be
+        ///   a multiple of the size of `u8`, which is trivially true because
+        ///   `u8`'s size is 1.
+        /// - The distance, in bytes, cannot overflow `isize`. This is guaranteed
+        ///   because no allocated object can have a size larger than can fit in
+        ///   `isize`. [1]
+        /// - The distance being in-bounds cannot rely on wrapping around the
+        ///   address space. This is guaranteed because the same is guaranteed of
+        ///   allocated objects. [1]
+        ///
+        /// [1] FIXME(#429), FIXME(https://github.com/rust-lang/rust/pull/116675):
+        ///     Once these are guaranteed in the Reference, cite it.
         let offset = unsafe { field.cast::<u8>().offset_from(ptr.cast::<u8>()) };
         // Guaranteed not to be lossy: `field` comes after `ptr`, so the offset
         // from `ptr` to `field` is guaranteed to be positive.
@@ -274,18 +274,18 @@ macro_rules! trailing_field_offset {
 #[macro_export]
 macro_rules! align_of {
     ($ty:ty) => {{
-        // SAFETY: `OffsetOfTrailingIsAlignment` is `repr(C)`, and its layout is
-        // guaranteed [1] to begin with the single-byte layout for `_byte`,
-        // followed by the padding needed to align `_trailing`, then the layout
-        // for `_trailing`, and finally any trailing padding bytes needed to
-        // correctly-align the entire struct.
-        //
-        // This macro computes the alignment of `$ty` by counting the number of
-        // bytes preceding `_trailing`. For instance, if the alignment of `$ty`
-        // is `1`, then no padding is required align `_trailing` and it will be
-        // located immediately after `_byte` at offset 1. If the alignment of
-        // `$ty` is 2, then a single padding byte is required before
-        // `_trailing`, and `_trailing` will be located at offset 2.
+        /// SAFETY: `OffsetOfTrailingIsAlignment` is `repr(C)`, and its layout is
+        /// guaranteed [1] to begin with the single-byte layout for `_byte`,
+        /// followed by the padding needed to align `_trailing`, then the layout
+        /// for `_trailing`, and finally any trailing padding bytes needed to
+        /// correctly-align the entire struct.
+        ///
+        /// This macro computes the alignment of `$ty` by counting the number of
+        /// bytes preceding `_trailing`. For instance, if the alignment of `$ty`
+        /// is `1`, then no padding is required align `_trailing` and it will be
+        /// located immediately after `_byte` at offset 1. If the alignment of
+        /// `$ty` is 2, then a single padding byte is required before
+        /// `_trailing`, and `_trailing` will be located at offset 2.
 
         // This correspondence between offset and alignment holds for all valid
         // Rust alignments, and we confirm this exhaustively (or, at least up to
@@ -485,7 +485,7 @@ macro_rules! assert_align_gt_eq {
             // `align_of::<T>() == max(align_of::<T>(), align_of::<U>())` - in
             // other words, if `align_of::<T>() >= align_of::<U>()`.
             //
-            // SAFETY: This code is never run.
+            /// SAFETY: This code is never run.
             max_aligns = unsafe {
                 // Clippy: We can't annotate the types; this macro is designed
                 // to infer the types from the calling context.
@@ -508,7 +508,7 @@ macro_rules! assert_size_eq {
         // The comments here should be read in the context of this macro's
         // invocations in `transmute_ref!` and `transmute_mut!`.
         if false {
-            // SAFETY: This code is never run.
+            /// SAFETY: This code is never run.
             $u = unsafe {
                 // Clippy:
                 // - It's okay to transmute a type to itself.
@@ -565,11 +565,11 @@ where
 {
     static_assert!(Src, Dst => mem::size_of::<Dst>() == mem::size_of::<Src>());
 
-    // SAFETY: This is a pointer cast, satisfying the following properties:
-    // - `p as *mut Dst` addresses a subset of the `bytes` addressed by `src`,
-    //   because we assert above that the size of `Dst` equal to the size of
-    //   `Src`.
-    // - `p as *mut Dst` is a provenance-preserving cast
+    /// SAFETY: This is a pointer cast, satisfying the following properties:
+    /// - `p as *mut Dst` addresses a subset of the `bytes` addressed by `src`,
+    ///   because we assert above that the size of `Dst` equal to the size of
+    ///   `Src`.
+    /// - `p as *mut Dst` is a provenance-preserving cast
     let c_ptr = unsafe { src.cast_unsized(|p| cast!(p)) };
 
     match c_ptr.try_into_valid() {
@@ -577,16 +577,16 @@ where
         Err(err) => {
             // Re-cast `Ptr<Dst>` to `Ptr<Src>`.
             let ptr = err.into_src();
-            // SAFETY: This is a pointer cast, satisfying the following
-            // properties:
-            // - `p as *mut Src` addresses a subset of the `bytes` addressed by
-            //   `ptr`, because we assert above that the size of `Dst` is equal
-            //   to the size of `Src`.
-            // - `p as *mut Src` is a provenance-preserving cast
+            /// SAFETY: This is a pointer cast, satisfying the following
+            /// properties:
+            /// - `p as *mut Src` addresses a subset of the `bytes` addressed by
+            ///   `ptr`, because we assert above that the size of `Dst` is equal
+            ///   to the size of `Src`.
+            /// - `p as *mut Src` is a provenance-preserving cast
             let ptr = unsafe { ptr.cast_unsized(|p| cast!(p)) };
-            // SAFETY: `ptr` is `src`, and has the same alignment invariant.
+            /// SAFETY: `ptr` is `src`, and has the same alignment invariant.
             let ptr = unsafe { ptr.assume_alignment::<I::Alignment>() };
-            // SAFETY: `ptr` is `src` and has the same validity invariant.
+            /// SAFETY: `ptr` is `src` and has the same validity invariant.
             let ptr = unsafe { ptr.assume_validity::<I::Validity>() };
             Err(ValidityError::new(ptr.unify_invariants()))
         }
@@ -613,29 +613,29 @@ where
     static_assert!(Src, Dst => mem::size_of::<Dst>() == mem::size_of::<Src>());
 
     let mu_src = mem::MaybeUninit::new(src);
-    // SAFETY: By invariant on `&`, the following are satisfied:
-    // - `&mu_src` is valid for reads
-    // - `&mu_src` is properly aligned
-    // - `&mu_src`'s referent is bit-valid
+    /// SAFETY: By invariant on `&`, the following are satisfied:
+    /// - `&mu_src` is valid for reads
+    /// - `&mu_src` is properly aligned
+    /// - `&mu_src`'s referent is bit-valid
     let mu_src_copy = unsafe { core::ptr::read(&mu_src) };
-    // SAFETY: `MaybeUninit` has no validity constraints.
+    /// SAFETY: `MaybeUninit` has no validity constraints.
     let mut mu_dst: mem::MaybeUninit<Dst> =
         unsafe { crate::util::transmute_unchecked(mu_src_copy) };
 
     let ptr = Ptr::from_mut(&mut mu_dst);
 
-    // SAFETY: Since `Src: IntoBytes`, and since `size_of::<Src>() ==
-    // size_of::<Dst>()` by the preceding assertion, all of `mu_dst`'s bytes are
-    // initialized.
+    /// SAFETY: Since `Src: IntoBytes`, and since `size_of::<Src>() ==
+    /// size_of::<Dst>()` by the preceding assertion, all of `mu_dst`'s bytes are
+    /// initialized.
     let ptr = unsafe { ptr.assume_validity::<invariant::Initialized>() };
 
-    // SAFETY: `MaybeUninit<T>` and `T` have the same size [1], so this cast
-    // preserves the referent's size. This cast preserves provenance.
-    //
-    // [1] Per https://doc.rust-lang.org/1.81.0/std/mem/union.MaybeUninit.html#layout-1:
-    //
-    //   `MaybeUninit<T>` is guaranteed to have the same size, alignment, and
-    //   ABI as `T`
+    /// SAFETY: `MaybeUninit<T>` and `T` have the same size [1], so this cast
+    /// preserves the referent's size. This cast preserves provenance.
+    ///
+    /// [1] Per https://doc.rust-lang.org/1.81.0/std/mem/union.MaybeUninit.html#layout-1:
+    ///
+    ///   `MaybeUninit<T>` is guaranteed to have the same size, alignment, and
+    ///   ABI as `T`
     let ptr: Ptr<'_, Dst, _> = unsafe {
         ptr.cast_unsized(|ptr: crate::pointer::PtrInner<'_, mem::MaybeUninit<Dst>>| {
             ptr.cast_sized()
@@ -643,13 +643,13 @@ where
     };
 
     if Dst::is_bit_valid(ptr.forget_aligned()) {
-        // SAFETY: Since `Dst::is_bit_valid`, we know that `ptr`'s referent is
-        // bit-valid for `Dst`. `ptr` points to `mu_dst`, and no intervening
-        // operations have mutated it, so it is a bit-valid `Dst`.
+        /// SAFETY: Since `Dst::is_bit_valid`, we know that `ptr`'s referent is
+        /// bit-valid for `Dst`. `ptr` points to `mu_dst`, and no intervening
+        /// operations have mutated it, so it is a bit-valid `Dst`.
         Ok(unsafe { mu_dst.assume_init() })
     } else {
-        // SAFETY: `mu_src` was constructed from `src` and never modified, so it
-        // is still bit-valid.
+        /// SAFETY: `mu_src` was constructed from `src` and never modified, so it
+        /// is still bit-valid.
         Err(ValidityError::new(unsafe { mu_src.assume_init() }))
     }
 }
@@ -677,21 +677,21 @@ where
     match try_cast_or_pme::<Src, Dst, _, BecauseImmutable, _>(ptr) {
         Ok(ptr) => {
             static_assert!(Src, Dst => mem::align_of::<Dst>() <= mem::align_of::<Src>());
-            // SAFETY: We have checked that `Dst` does not have a stricter
-            // alignment requirement than `Src`.
+            /// SAFETY: We have checked that `Dst` does not have a stricter
+            /// alignment requirement than `Src`.
             let ptr = unsafe { ptr.assume_alignment::<invariant::Aligned>() };
             Ok(ptr.as_ref())
         }
         Err(err) => Err(err.map_src(|ptr| {
-            // SAFETY: Because `Src: Immutable` and we create a `Ptr` via
-            // `Ptr::from_ref`, the resulting `Ptr` is a shared-and-`Immutable`
-            // `Ptr`, which does not permit mutation of its referent. Therefore,
-            // no mutation could have happened during the call to
-            // `try_cast_or_pme` (any such mutation would be unsound).
-            //
-            // `try_cast_or_pme` promises to return its original argument, and
-            // so we know that we are getting back the same `ptr` that we
-            // originally passed, and that `ptr` was a bit-valid `Src`.
+            /// SAFETY: Because `Src: Immutable` and we create a `Ptr` via
+            /// `Ptr::from_ref`, the resulting `Ptr` is a shared-and-`Immutable`
+            /// `Ptr`, which does not permit mutation of its referent. Therefore,
+            /// no mutation could have happened during the call to
+            /// `try_cast_or_pme` (any such mutation would be unsound).
+            ///
+            /// `try_cast_or_pme` promises to return its original argument, and
+            /// so we know that we are getting back the same `ptr` that we
+            /// originally passed, and that `ptr` was a bit-valid `Src`.
             let ptr = unsafe { ptr.assume_valid() };
             ptr.as_ref()
         })),
@@ -721,8 +721,8 @@ where
     match try_cast_or_pme::<Src, Dst, _, BecauseExclusive, _>(ptr) {
         Ok(ptr) => {
             static_assert!(Src, Dst => mem::align_of::<Dst>() <= mem::align_of::<Src>());
-            // SAFETY: We have checked that `Dst` does not have a stricter
-            // alignment requirement than `Src`.
+            /// SAFETY: We have checked that `Dst` does not have a stricter
+            /// alignment requirement than `Src`.
             let ptr = unsafe { ptr.assume_alignment::<invariant::Aligned>() };
             Ok(ptr.as_mut())
         }
@@ -771,19 +771,19 @@ impl<'a, Src, Dst> Wrap<&'a Src, &'a Dst> {
 
         let src: *const Src = self.0;
         let dst = src.cast::<Dst>();
-        // SAFETY:
-        // - We know that it is sound to view the target type of the input reference
-        //   (`Src`) as the target type of the output reference (`Dst`) because the
-        //   caller has guaranteed that `Src: IntoBytes`, `Dst: FromBytes`, and
-        //   `size_of::<Src>() == size_of::<Dst>()`.
-        // - We know that there are no `UnsafeCell`s, and thus we don't have to
-        //   worry about `UnsafeCell` overlap, because `Src: Immutable` and `Dst:
-        //   Immutable`.
-        // - The caller has guaranteed that alignment is not increased.
-        // - We know that the returned lifetime will not outlive the input lifetime
-        //   thanks to the lifetime bounds on this function.
-        //
-        // FIXME(#67): Once our MSRV is 1.58, replace this `transmute` with `&*dst`.
+        /// SAFETY:
+        /// - We know that it is sound to view the target type of the input reference
+        ///   (`Src`) as the target type of the output reference (`Dst`) because the
+        ///   caller has guaranteed that `Src: IntoBytes`, `Dst: FromBytes`, and
+        ///   `size_of::<Src>() == size_of::<Dst>()`.
+        /// - We know that there are no `UnsafeCell`s, and thus we don't have to
+        ///   worry about `UnsafeCell` overlap, because `Src: Immutable` and `Dst:
+        ///   Immutable`.
+        /// - The caller has guaranteed that alignment is not increased.
+        /// - We know that the returned lifetime will not outlive the input lifetime
+        ///   thanks to the lifetime bounds on this function.
+        ///
+        /// FIXME(#67): Once our MSRV is 1.58, replace this `transmute` with `&*dst`.
         #[allow(clippy::transmute_ptr_to_ref)]
         unsafe {
             mem::transmute(dst)
@@ -812,15 +812,15 @@ impl<'a, Src, Dst> Wrap<&'a mut Src, &'a mut Dst> {
 
         let src: *mut Src = self.0;
         let dst = src.cast::<Dst>();
-        // SAFETY:
-        // - We know that it is sound to view the target type of the input
-        //   reference (`Src`) as the target type of the output reference
-        //   (`Dst`) and vice-versa because `Src: FromBytes + IntoBytes`, `Dst:
-        //   FromBytes + IntoBytes`, and (as asserted above) `size_of::<Src>()
-        //   == size_of::<Dst>()`.
-        // - We asserted above that alignment will not increase.
-        // - We know that the returned lifetime will not outlive the input
-        //   lifetime thanks to the lifetime bounds on this function.
+        /// SAFETY:
+        /// - We know that it is sound to view the target type of the input
+        ///   reference (`Src`) as the target type of the output reference
+        ///   (`Dst`) and vice-versa because `Src: FromBytes + IntoBytes`, `Dst:
+        ///   FromBytes + IntoBytes`, and (as asserted above) `size_of::<Src>()
+        ///   == size_of::<Dst>()`.
+        /// - We asserted above that alignment will not increase.
+        /// - We know that the returned lifetime will not outlive the input
+        ///   lifetime thanks to the lifetime bounds on this function.
         unsafe { &mut *dst }
     }
 }
@@ -845,7 +845,7 @@ where
             Src::LAYOUT.align.get() >= Dst::LAYOUT.align.get()
         }, "cannot transmute reference when destination type has higher alignment than source type");
 
-        // SAFETY: We only use `S` as `S<Src>` and `D` as `D<Dst>`.
+        /// SAFETY: We only use `S` as `S<Src>` and `D` as `D<Dst>`.
         unsafe {
             unsafe_with_size_eq!(<S<Src>, D<Dst>> {
                 let ptr = Ptr::from_ref(self.0)
@@ -855,9 +855,9 @@ where
                     .recall_validity::<invariant::Valid, _>();
 
                 #[allow(unused_unsafe)]
-                // SAFETY: The preceding `static_assert!` ensures that
-                // `T::LAYOUT.align >= U::LAYOUT.align`. Since `self.0` is
-                // validly-aligned for `T`, it is also validly-aligned for `U`.
+                /// SAFETY: The preceding `static_assert!` ensures that
+                /// `T::LAYOUT.align >= U::LAYOUT.align`. Since `self.0` is
+                /// validly-aligned for `T`, it is also validly-aligned for `U`.
                 let ptr = unsafe { ptr.assume_alignment() };
 
                 &ptr.as_ref().0
@@ -885,7 +885,7 @@ where
             Src::LAYOUT.align.get() >= Dst::LAYOUT.align.get()
         }, "cannot transmute reference when destination type has higher alignment than source type");
 
-        // SAFETY: We only use `S` as `S<Src>` and `D` as `D<Dst>`.
+        /// SAFETY: We only use `S` as `S<Src>` and `D` as `D<Dst>`.
         unsafe {
             unsafe_with_size_eq!(<S<Src>, D<Dst>> {
                 let ptr = Ptr::from_mut(self.0)
@@ -895,9 +895,9 @@ where
                     .recall_validity::<invariant::Valid, (_, (_, _))>();
 
                 #[allow(unused_unsafe)]
-                // SAFETY: The preceding `static_assert!` ensures that
-                // `T::LAYOUT.align >= U::LAYOUT.align`. Since `self.0` is
-                // validly-aligned for `T`, it is also validly-aligned for `U`.
+                /// SAFETY: The preceding `static_assert!` ensures that
+                /// `T::LAYOUT.align >= U::LAYOUT.align`. Since `self.0` is
+                /// validly-aligned for `T`, it is also validly-aligned for `U`.
                 let ptr = unsafe { ptr.assume_alignment() };
 
                 &mut ptr.as_mut().0

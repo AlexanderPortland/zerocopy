@@ -25,11 +25,11 @@ use super::*;
 /// wrapped `T` is.
 pub(crate) struct SendSyncPhantomData<T: ?Sized>(PhantomData<T>);
 
-// SAFETY: `SendSyncPhantomData` does not enable any behavior which isn't sound
-// to be called from multiple threads.
+/// SAFETY: `SendSyncPhantomData` does not enable any behavior which isn't sound
+/// to be called from multiple threads.
 unsafe impl<T: ?Sized> Send for SendSyncPhantomData<T> {}
-// SAFETY: `SendSyncPhantomData` does not enable any behavior which isn't sound
-// to be called from multiple threads.
+/// SAFETY: `SendSyncPhantomData` does not enable any behavior which isn't sound
+/// to be called from multiple threads.
 unsafe impl<T: ?Sized> Sync for SendSyncPhantomData<T> {}
 
 impl<T: ?Sized> Default for SendSyncPhantomData<T> {
@@ -107,8 +107,8 @@ pub(crate) fn validate_aligned_to<T: AsAddress, U>(t: T) -> Result<(), Alignment
     if remainder == 0 {
         Ok(())
     } else {
-        // SAFETY: We just confirmed that `t.addr() % align_of::<U>() != 0`.
-        // That's only possible if `align_of::<U>() > 1`.
+        /// SAFETY: We just confirmed that `t.addr() % align_of::<U>() != 0`.
+        /// That's only possible if `align_of::<U>() > 1`.
         Err(unsafe { AlignmentError::new_unchecked(()) })
     }
 }
@@ -248,16 +248,16 @@ pub(crate) const fn min(a: NonZeroUsize, b: NonZeroUsize) -> NonZeroUsize {
 #[inline(always)]
 pub(crate) unsafe fn copy_unchecked(src: &[u8], dst: &mut [u8]) {
     debug_assert!(src.len() <= dst.len());
-    // SAFETY: This invocation satisfies the safety contract of
-    // copy_nonoverlapping [1]:
-    // - `src.as_ptr()` is trivially valid for reads of `src.len()` bytes
-    // - `dst.as_ptr()` is valid for writes of `src.len()` bytes, because the
-    //   caller has promised that `src.len() <= dst.len()`
-    // - `src` and `dst` are, trivially, properly aligned
-    // - the region of memory beginning at `src` with a size of `src.len()`
-    //   bytes does not overlap with the region of memory beginning at `dst`
-    //   with the same size, because `dst` is derived from an exclusive
-    //   reference.
+    /// SAFETY: This invocation satisfies the safety contract of
+    /// copy_nonoverlapping [1]:
+    /// - `src.as_ptr()` is trivially valid for reads of `src.len()` bytes
+    /// - `dst.as_ptr()` is valid for writes of `src.len()` bytes, because the
+    ///   caller has promised that `src.len() <= dst.len()`
+    /// - `src` and `dst` are, trivially, properly aligned
+    /// - the region of memory beginning at `src` with a size of `src.len()`
+    ///   bytes does not overlap with the region of memory beginning at `dst`
+    ///   with the same size, because `dst` is derived from an exclusive
+    ///   reference.
     unsafe {
         core::ptr::copy_nonoverlapping(src.as_ptr(), dst.as_mut_ptr(), src.len());
     };
@@ -278,25 +278,25 @@ pub(crate) const unsafe fn transmute_unchecked<Src, Dst>(src: Src) -> Dst {
         dst: ManuallyDrop<Dst>,
     }
 
-    // SAFETY: Since `Transmute<Src, Dst>` is `#[repr(C)]`, its `src` and `dst`
-    // fields both start at the same offset and the types of those fields are
-    // transparent wrappers around `Src` and `Dst` [1]. Consequently,
-    // initializing `Transmute` with with `src` and then reading out `dst` is
-    // equivalent to transmuting from `Src` to `Dst` [2]. Transmuting from `src`
-    // to `Dst` is valid because — by contract on the caller — `src` is a valid
-    // instance of `Dst`.
-    //
-    // [1] Per https://doc.rust-lang.org/1.82.0/std/mem/struct.ManuallyDrop.html:
-    //
-    //     `ManuallyDrop<T>` is guaranteed to have the same layout and bit
-    //     validity as `T`, and is subject to the same layout optimizations as
-    //     `T`.
-    //
-    // [2] Per https://doc.rust-lang.org/1.82.0/reference/items/unions.html#reading-and-writing-union-fields:
-    //
-    //     Effectively, writing to and then reading from a union with the C
-    //     representation is analogous to a transmute from the type used for
-    //     writing to the type used for reading.
+    /// SAFETY: Since `Transmute<Src, Dst>` is `#[repr(C)]`, its `src` and `dst`
+    /// fields both start at the same offset and the types of those fields are
+    /// transparent wrappers around `Src` and `Dst` [1]. Consequently,
+    /// initializing `Transmute` with with `src` and then reading out `dst` is
+    /// equivalent to transmuting from `Src` to `Dst` [2]. Transmuting from `src`
+    /// to `Dst` is valid because — by contract on the caller — `src` is a valid
+    /// instance of `Dst`.
+    ///
+    /// [1] Per https://doc.rust-lang.org/1.82.0/std/mem/struct.ManuallyDrop.html:
+    ///
+    ///     `ManuallyDrop<T>` is guaranteed to have the same layout and bit
+    ///     validity as `T`, and is subject to the same layout optimizations as
+    ///     `T`.
+    ///
+    /// [2] Per https://doc.rust-lang.org/1.82.0/reference/items/unions.html#reading-and-writing-union-fields:
+    ///
+    ///     Effectively, writing to and then reading from a union with the C
+    ///     representation is analogous to a transmute from the type used for
+    ///     writing to the type used for reading.
     unsafe { ManuallyDrop::into_inner(Transmute { src: ManuallyDrop::new(src) }.dst) }
 }
 
@@ -346,15 +346,15 @@ where
     let layout = Layout::from_size_align(size, align).or(Err(AllocError))?;
 
     let ptr = if layout.size() != 0 {
-        // SAFETY: By contract on the caller, `allocate` is either
-        // `alloc::alloc::alloc` or `alloc::alloc::alloc_zeroed`. The above
-        // check ensures their shared safety precondition: that the supplied
-        // layout is not zero-sized type [1].
-        //
-        // [1] Per https://doc.rust-lang.org/stable/std/alloc/trait.GlobalAlloc.html#tymethod.alloc:
-        //
-        //     This function is unsafe because undefined behavior can result if
-        //     the caller does not ensure that layout has non-zero size.
+        /// SAFETY: By contract on the caller, `allocate` is either
+        /// `alloc::alloc::alloc` or `alloc::alloc::alloc_zeroed`. The above
+        /// check ensures their shared safety precondition: that the supplied
+        /// layout is not zero-sized type [1].
+        ///
+        /// [1] Per https://doc.rust-lang.org/stable/std/alloc/trait.GlobalAlloc.html#tymethod.alloc:
+        ///
+        ///     This function is unsafe because undefined behavior can result if
+        ///     the caller does not ensure that layout has non-zero size.
         let ptr = unsafe { allocate(layout) };
         match NonNull::new(ptr) {
             Some(ptr) => ptr,
@@ -368,23 +368,23 @@ where
         // we're only executing this branch when we're constructing a zero-sized
         // `Box`, which doesn't require provenance.
         //
-        // SAFETY: any initialized bit sequence is a bit-valid `*mut u8`. All
-        // bits of a `usize` are initialized.
+        /// SAFETY: any initialized bit sequence is a bit-valid `*mut u8`. All
+        /// bits of a `usize` are initialized.
         #[allow(unknown_lints)] // For `integer_to_ptr_transmutes`
         #[allow(clippy::useless_transmute, integer_to_ptr_transmutes)]
         let dangling = unsafe { mem::transmute::<usize, *mut u8>(align) };
-        // SAFETY: `dangling` is constructed from `T::LAYOUT.align`, which is a
-        // `NonZeroUsize`, which is guaranteed to be non-zero.
-        //
-        // `Box<[T]>` does not allocate when `T` is zero-sized or when `len` is
-        // zero, but it does require a non-null dangling pointer for its
-        // allocation.
-        //
-        // FIXME(https://github.com/rust-lang/rust/issues/95228): Use
-        // `std::ptr::without_provenance` once it's stable. That may optimize
-        // better. As written, Rust may assume that this consumes "exposed"
-        // provenance, and thus Rust may have to assume that this may consume
-        // provenance from any pointer whose provenance has been exposed.
+        /// SAFETY: `dangling` is constructed from `T::LAYOUT.align`, which is a
+        /// `NonZeroUsize`, which is guaranteed to be non-zero.
+        ///
+        /// `Box<[T]>` does not allocate when `T` is zero-sized or when `len` is
+        /// zero, but it does require a non-null dangling pointer for its
+        /// allocation.
+        ///
+        /// FIXME(https://github.com/rust-lang/rust/issues/95228): Use
+        /// `std::ptr::without_provenance` once it's stable. That may optimize
+        /// better. As written, Rust may assume that this consumes "exposed"
+        /// provenance, and thus Rust may have to assume that this may consume
+        /// provenance from any pointer whose provenance has been exposed.
         unsafe { NonNull::new_unchecked(dangling) }
     };
 
@@ -430,36 +430,36 @@ mod len_of {
             T: KnownLayout<PointerMetadata = usize>,
         {
             if meta <= Ptr::from_ref(t).len() {
-                // SAFETY: We have checked that `meta` is not greater than `t`'s
-                // metadata, which, by invariant on `&T`, addresses no more than
-                // `isize::MAX` bytes [1][2].
-                //
-                // [1] Per https://doc.rust-lang.org/1.85.0/std/primitive.reference.html#safety:
-                //
-                //    For all types, `T: ?Sized`, and for all `t: &T` or `t:
-                //    &mut T`, when such values cross an API boundary, the
-                //    following invariants must generally be upheld:
-                //
-                //    * `t` is non-null
-                //    * `t` is aligned to `align_of_val(t)`
-                //    * if `size_of_val(t) > 0`, then `t` is dereferenceable for
-                //      `size_of_val(t)` many bytes
-                //
-                //    If `t` points at address `a`, being "dereferenceable" for
-                //    N bytes means that the memory range `[a, a + N)` is all
-                //    contained within a single allocated object.
-                //
-                // [2] Per https://doc.rust-lang.org/1.85.0/std/ptr/index.html#allocated-object:
-                //
-                //    For any allocated object with `base` address, `size`, and
-                //    a set of `addresses`, the following are guaranteed:
-                //    - For all addresses `a` in `addresses`, `a` is in the
-                //      range `base .. (base + size)` (note that this requires
-                //      `a < base + size`, not `a <= base + size`)
-                //    - `base` is not equal to [`null()`] (i.e., the address
-                //      with the numerical value 0)
-                //    - `base + size <= usize::MAX`
-                //    - `size <= isize::MAX`
+                /// SAFETY: We have checked that `meta` is not greater than `t`'s
+                /// metadata, which, by invariant on `&T`, addresses no more than
+                /// `isize::MAX` bytes [1][2].
+                ///
+                /// [1] Per https://doc.rust-lang.org/1.85.0/std/primitive.reference.html#safety:
+                ///
+                ///    For all types, `T: ?Sized`, and for all `t: &T` or `t:
+                ///    &mut T`, when such values cross an API boundary, the
+                ///    following invariants must generally be upheld:
+                ///
+                ///    * `t` is non-null
+                ///    * `t` is aligned to `align_of_val(t)`
+                ///    * if `size_of_val(t) > 0`, then `t` is dereferenceable for
+                ///      `size_of_val(t)` many bytes
+                ///
+                ///    If `t` points at address `a`, being "dereferenceable" for
+                ///    N bytes means that the memory range `[a, a + N)` is all
+                ///    contained within a single allocated object.
+                ///
+                /// [2] Per https://doc.rust-lang.org/1.85.0/std/ptr/index.html#allocated-object:
+                ///
+                ///    For any allocated object with `base` address, `size`, and
+                ///    a set of `addresses`, the following are guaranteed:
+                ///    - For all addresses `a` in `addresses`, `a` is in the
+                ///      range `base .. (base + size)` (note that this requires
+                ///      `a < base + size`, not `a <= base + size`)
+                ///    - `base` is not equal to [`null()`] (i.e., the address
+                ///      with the numerical value 0)
+                ///    - `base + size <= usize::MAX`
+                ///    - `size <= isize::MAX`
                 Some(unsafe { Self::new_unchecked(meta) })
             } else {
                 None
@@ -471,8 +471,8 @@ mod len_of {
         /// The size of an instance of `&T` with the given metadata is not
         /// larger than `isize::MAX`.
         pub(crate) unsafe fn new_unchecked(meta: T::PointerMetadata) -> Self {
-            // SAFETY: The caller has promised that the size of an instance of
-            // `&T` with the given metadata is not larger than `isize::MAX`.
+            /// SAFETY: The caller has promised that the size of an instance of
+            /// `&T` with the given metadata is not larger than `isize::MAX`.
             Self { meta, _p: PhantomData }
         }
 
@@ -489,12 +489,12 @@ mod len_of {
             T: KnownLayout<PointerMetadata = usize>,
         {
             let trailing_slice_layout = crate::trailing_slice_layout::<T>();
-            // SAFETY: By invariant on `self`, a `&T` with metadata `self.meta`
-            // describes an object of size `<= isize::MAX`. This computes the
-            // size of such a `&T` without any trailing padding, and so neither
-            // the multiplication nor the addition will overflow.
-            //
-            // FIXME(#67): Remove this allow. See NumExt for more details.
+            /// SAFETY: By invariant on `self`, a `&T` with metadata `self.meta`
+            /// describes an object of size `<= isize::MAX`. This computes the
+            /// size of such a `&T` without any trailing padding, and so neither
+            /// the multiplication nor the addition will overflow.
+            ///
+            /// FIXME(#67): Remove this allow. See NumExt for more details.
             #[allow(unstable_name_collisions, clippy::incompatible_msrv)]
             let unpadded_size = unsafe {
                 let trailing_size = self.meta.unchecked_mul(trailing_slice_layout.elem_size);
@@ -561,21 +561,21 @@ mod len_of {
             // `elems` has size not larger than `isize::MAX`.
             let elems = meta.unwrap_or(elems);
 
-            // SAFETY: See Lemma 2.
+            /// SAFETY: See Lemma 2.
             let elems = unsafe { MetadataOf::new_unchecked(elems) };
 
-            // SAFETY: Let `size` be the size of a `&T` with metadata `elems`.
-            // By post-condition on `validate_cast_and_convert_metadata`, one of
-            // the following conditions holds:
-            // - `split_at == size`, in which case, by Lemma 2, `split_at <=
-            //   isize::MAX`. Since `size_of::<u8>() == 1`, a `[u8]` with
-            //   `split_at` elems has size not larger than `isize::MAX`.
-            // - `split_at == bytes_len - size`. Since `bytes_len:
-            //   MetadataOf<u8>`, and since `size` is non-negative, `split_at`
-            //   addresses no more bytes than `bytes_len` does. Since
-            //   `bytes_len: MetadataOf<u8>`, `bytes_len` describes a `[u8]`
-            //   which has no more than `isize::MAX` bytes, and thus so does
-            //   `split_at`.
+            /// SAFETY: Let `size` be the size of a `&T` with metadata `elems`.
+            /// By post-condition on `validate_cast_and_convert_metadata`, one of
+            /// the following conditions holds:
+            /// - `split_at == size`, in which case, by Lemma 2, `split_at <=
+            ///   isize::MAX`. Since `size_of::<u8>() == 1`, a `[u8]` with
+            ///   `split_at` elems has size not larger than `isize::MAX`.
+            /// - `split_at == bytes_len - size`. Since `bytes_len:
+            ///   MetadataOf<u8>`, and since `size` is non-negative, `split_at`
+            ///   addresses no more bytes than `bytes_len` does. Since
+            ///   `bytes_len: MetadataOf<u8>`, `bytes_len` describes a `[u8]`
+            ///   which has no more than `isize::MAX` bytes, and thus so does
+            ///   `split_at`.
             let split_at = unsafe { MetadataOf::<[u8]>::new_unchecked(split_at) };
             Ok((elems, split_at))
         }
@@ -621,7 +621,7 @@ pub(crate) mod polyfills {
         #[inline(always)]
         fn slice_from_raw_parts(data: Self, len: usize) -> NonNull<[T]> {
             let ptr = ptr::slice_from_raw_parts_mut(data.as_ptr(), len);
-            // SAFETY: `ptr` is converted from `data`, which is non-null.
+            /// SAFETY: `ptr` is converted from `data`, which is non-null.
             unsafe { NonNull::new_unchecked(ptr) }
         }
     }
@@ -671,8 +671,8 @@ pub(crate) mod polyfills {
             match self.checked_add(rhs) {
                 Some(x) => x,
                 None => {
-                    // SAFETY: The caller promises that the addition will not
-                    // underflow.
+                    /// SAFETY: The caller promises that the addition will not
+                    /// underflow.
                     unsafe { core::hint::unreachable_unchecked() }
                 }
             }
@@ -687,8 +687,8 @@ pub(crate) mod polyfills {
             match self.checked_sub(rhs) {
                 Some(x) => x,
                 None => {
-                    // SAFETY: The caller promises that the subtraction will not
-                    // underflow.
+                    /// SAFETY: The caller promises that the subtraction will not
+                    /// underflow.
                     unsafe { core::hint::unreachable_unchecked() }
                 }
             }
@@ -703,8 +703,8 @@ pub(crate) mod polyfills {
             match self.checked_mul(rhs) {
                 Some(x) => x,
                 None => {
-                    // SAFETY: The caller promises that the multiplication will
-                    // not overflow.
+                    /// SAFETY: The caller promises that the multiplication will
+                    /// not overflow.
                     unsafe { core::hint::unreachable_unchecked() }
                 }
             }

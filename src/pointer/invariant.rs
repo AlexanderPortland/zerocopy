@@ -133,10 +133,10 @@ impl Alignment for Aligned {}
 /// Any bit pattern is allowed in the `Ptr`'s referent, including uninitialized
 /// bytes.
 pub enum Uninit {}
-// SAFETY: `Uninit`'s validity is well-defined for all `T: ?Sized`, and is not a
-// function of any property of `T` other than its bit validity (in fact, it's
-// not even a property of `T`'s bit validity, but this is more than we are
-// required to uphold).
+/// SAFETY: `Uninit`'s validity is well-defined for all `T: ?Sized`, and is not a
+/// function of any property of `T` other than its bit validity (in fact, it's
+/// not even a property of `T`'s bit validity, but this is more than we are
+/// required to uphold).
 unsafe impl Validity for Uninit {}
 
 /// The byte ranges initialized in `T` are also initialized in the referent of a
@@ -167,24 +167,24 @@ unsafe impl Validity for Uninit {}
 ///   enum type, in which case the same rules apply depending on the state of
 ///   its discriminant, and so on recursively).
 pub enum AsInitialized {}
-// SAFETY: `AsInitialized`'s validity is well-defined for all `T: ?Sized`, and
-// is not a function of any property of `T` other than its bit validity.
+/// SAFETY: `AsInitialized`'s validity is well-defined for all `T: ?Sized`, and
+/// is not a function of any property of `T` other than its bit validity.
 unsafe impl Validity for AsInitialized {}
 
 /// The byte ranges in the referent are fully initialized. In other words, if
 /// the referent is `N` bytes long, then it contains a bit-valid `[u8; N]`.
 pub enum Initialized {}
-// SAFETY: `Initialized`'s validity is well-defined for all `T: ?Sized`, and is
-// not a function of any property of `T` other than its bit validity (in fact,
-// it's not even a property of `T`'s bit validity, but this is more than we are
-// required to uphold).
+/// SAFETY: `Initialized`'s validity is well-defined for all `T: ?Sized`, and is
+/// not a function of any property of `T` other than its bit validity (in fact,
+/// it's not even a property of `T`'s bit validity, but this is more than we are
+/// required to uphold).
 unsafe impl Validity for Initialized {}
 
 /// The referent of a `Ptr<T>` is valid for `T`, upholding bit validity and any
 /// library safety invariants.
 pub enum Valid {}
-// SAFETY: `Valid`'s validity is well-defined for all `T: ?Sized`, and is not a
-// function of any property of `T` other than its bit validity.
+/// SAFETY: `Valid`'s validity is well-defined for all `T: ?Sized`, and is not a
+/// function of any property of `T` other than its bit validity.
 unsafe impl Validity for Valid {}
 
 /// # Safety
@@ -193,9 +193,9 @@ unsafe impl Validity for Valid {}
 /// Initialized`.
 pub unsafe trait CastableFrom<ST: ?Sized, SV, DV> {}
 
-// SAFETY: `SV = DV = Uninit`.
+/// SAFETY: `SV = DV = Uninit`.
 unsafe impl<ST: ?Sized, DT: ?Sized> CastableFrom<ST, Uninit, Uninit> for DT {}
-// SAFETY: `SV = DV = Initialized`.
+/// SAFETY: `SV = DV = Initialized`.
 unsafe impl<ST: ?Sized, DT: ?Sized> CastableFrom<ST, Initialized, Initialized> for DT {}
 
 /// [`Ptr`](crate::Ptr) referents that permit unsynchronized read operations.
