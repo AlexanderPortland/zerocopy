@@ -832,7 +832,7 @@ mod _transitions {
         /// This method will panic if
         /// [`T::is_bit_valid`][TryFromBytes::is_bit_valid] panics.
         ///
-        /// # Safety
+        /// # Returned Safety
         ///
         /// On error, unsafe code may rely on this method's returned
         /// `ValidityError` containing `self`.

@@ -1501,7 +1501,7 @@ pub unsafe trait TryFromBytes {
 
     /// Does a given memory range contain a valid instance of `Self`?
     ///
-    /// # Safety
+    /// # Returned Safety
     ///
     /// Unsafe code may assume that, if `is_bit_valid(candidate)` returns true,
     /// `*candidate` contains a valid `Self`.

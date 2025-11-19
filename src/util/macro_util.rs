@@ -527,7 +527,7 @@ macro_rules! assert_size_eq {
 ///
 /// If so, returns `src` casted to a `Ptr<Dst, _>`. Otherwise returns `None`.
 ///
-/// # Safety
+/// # Returned Safety
 ///
 /// Unsafe code may assume that, if `try_cast_or_pme(src)` returns `Ok`,
 /// `*src` is a bit-valid instance of `Dst`, and that the size of `Src` is
@@ -821,7 +821,9 @@ impl<'a, Src, Dst> Wrap<&'a mut Src, &'a mut Dst> {
         /// - We asserted above that alignment will not increase.
         /// - We know that the returned lifetime will not outlive the input
         ///   lifetime thanks to the lifetime bounds on this function.
-        unsafe { &mut *dst }
+        unsafe {
+            &mut *dst
+        }
     }
 }
 
