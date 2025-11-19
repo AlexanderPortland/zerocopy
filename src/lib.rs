@@ -334,6 +334,7 @@
     __ZEROCOPY_INTERNAL_USE_ONLY_NIGHTLY_FEATURES_IN_TESTS,
     feature(layout_for_ptr, coverage_attribute)
 )]
+#![sniff_tool::check_unsafe_pub]
 
 // This is a hack to allow zerocopy-derive derives to work in this crate. They
 // assume that zerocopy is linked as an extern crate, so they access items from
