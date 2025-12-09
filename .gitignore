@@ -13,3 +13,5 @@ lcov.info
 
 # VSCode workspace files
 *.code-workspace
+
+sniff-test.log

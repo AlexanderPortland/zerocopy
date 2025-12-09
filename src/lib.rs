@@ -797,7 +797,7 @@ pub unsafe trait KnownLayout {
 
     /// Extracts the metadata from a pointer to `Self`.
     ///
-    /// # Safety
+    /// # Safety Invariants
     ///
     /// `pointer_to_metadata` always returns the correct metadata stored in
     /// `ptr`.
@@ -836,7 +836,7 @@ pub unsafe trait KnownLayout {
     /// Computes the size of an object of type `Self` with the given pointer
     /// metadata.
     ///
-    /// # Safety
+    /// # Safety Invariants
     ///
     /// `size_for_metadata` promises to return `None` if and only if the
     /// resulting size would not fit in a `usize`. Note that the returned size
@@ -1501,7 +1501,7 @@ pub unsafe trait TryFromBytes {
 
     /// Does a given memory range contain a valid instance of `Self`?
     ///
-    /// # Returned Safety
+    /// # Safety Invariants
     ///
     /// Unsafe code may assume that, if `is_bit_valid(candidate)` returns true,
     /// `*candidate` contains a valid `Self`.

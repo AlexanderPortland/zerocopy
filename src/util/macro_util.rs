@@ -527,7 +527,7 @@ macro_rules! assert_size_eq {
 ///
 /// If so, returns `src` casted to a `Ptr<Dst, _>`. Otherwise returns `None`.
 ///
-/// # Returned Safety
+/// # Safety Invariants
 ///
 /// Unsafe code may assume that, if `try_cast_or_pme(src)` returns `Ok`,
 /// `*src` is a bit-valid instance of `Dst`, and that the size of `Src` is

@@ -529,7 +529,7 @@ impl<'a, T> PtrInner<'a, [T]> {
 impl<'a, T, const N: usize> PtrInner<'a, [T; N]> {
     /// Casts this pointer-to-array into a slice.
     ///
-    /// # Safety
+    /// # Safety Invariants
     ///
     /// Callers may assume that the returned `PtrInner` references the same
     /// address and length as `self`.
@@ -573,7 +573,7 @@ impl<'a> PtrInner<'a, [u8]> {
     /// invalid instance of `U`. On success, returns a pointer to the
     /// largest-possible `U` which fits in `self`.
     ///
-    /// # Safety
+    /// # Safety Invariants
     ///
     /// The caller may assume that this implementation is correct, and may rely
     /// on that assumption for the soundness of their code. In particular, the

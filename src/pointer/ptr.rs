@@ -832,7 +832,7 @@ mod _transitions {
         /// This method will panic if
         /// [`T::is_bit_valid`][TryFromBytes::is_bit_valid] panics.
         ///
-        /// # Returned Safety
+        /// # Safety Invariants
         ///
         /// On error, unsafe code may rely on this method's returned
         /// `ValidityError` containing `self`.
@@ -1060,7 +1060,7 @@ mod _casts {
         /// describes an invalid instance of `U`. On success, returns a pointer
         /// to the largest-possible `U` which fits in `self`.
         ///
-        /// # Safety
+        /// # Safety Invariants
         ///
         /// The caller may assume that this implementation is correct, and may
         /// rely on that assumption for the soundness of their code. In
@@ -1136,7 +1136,7 @@ mod _casts {
         /// In particular, this method fails if `self` is not validly-aligned
         /// for `U` or if `self`'s size is not a valid size for `U`.
         ///
-        /// # Safety
+        /// # Safety Invariants
         ///
         /// On success, the caller may assume that the returned pointer
         /// references the same byte range as `self`.

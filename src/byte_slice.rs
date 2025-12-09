@@ -102,7 +102,7 @@ pub unsafe trait SplitByteSlice: ByteSlice {
     /// `s.split_at(mid)` returns `Ok((s[..mid], s[mid..]))` if `mid <=
     /// s.deref().len()` and otherwise returns `Err(s)`.
     ///
-    /// # Safety
+    /// # Safety Invariants
     ///
     /// Unsafe code may rely on this function correctly implementing the above
     /// functionality.
@@ -159,7 +159,7 @@ impl<B: SplitByteSlice + ByteSliceMut> SplitByteSliceMut for B {}
 pub unsafe trait IntoByteSlice<'a>: ByteSlice {
     /// Coverts `self` into a `&[u8]`.
     ///
-    /// # Safety
+    /// # Safety Invariants
     ///
     /// The returned reference has the same address and length as `self.deref()`
     /// and `self.deref_mut()`.
@@ -184,7 +184,7 @@ pub unsafe trait IntoByteSlice<'a>: ByteSlice {
 pub unsafe trait IntoByteSliceMut<'a>: IntoByteSlice<'a> + ByteSliceMut {
     /// Coverts `self` into a `&mut [u8]`.
     ///
-    /// # Safety
+    /// # Safety Invariants
     ///
     /// The returned reference has the same address and length as `self.deref()`
     /// and `self.deref_mut()`.

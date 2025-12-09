@@ -677,7 +677,9 @@ where
     pub fn bytes(r: &Self) -> &[u8] {
         /// SAFETY: We don't call any methods on `b` other than those provided by
         /// `ByteSlice`.
-        unsafe { r.as_byte_slice().deref() }
+        unsafe {
+            r.as_byte_slice().deref()
+        }
     }
 }
 
@@ -695,7 +697,9 @@ where
     pub fn bytes_mut(r: &mut Self) -> &mut [u8] {
         /// SAFETY: We don't call any methods on `b` other than those provided by
         /// `ByteSliceMut`.
-        unsafe { r.as_byte_slice_mut().deref_mut() }
+        unsafe {
+            r.as_byte_slice_mut().deref_mut()
+        }
     }
 }
 
@@ -720,7 +724,9 @@ where
         /// valid size and alignment for `T`. By safety invariant on `ByteSlice`,
         /// we know that this is preserved via `.deref()`. Because `T:
         /// FromBytes`, it is sound to interpret these bytes as a `T`.
-        unsafe { ptr::read(b.deref().as_ptr().cast::<T>()) }
+        unsafe {
+            ptr::read(b.deref().as_ptr().cast::<T>())
+        }
     }
 }
 
@@ -745,7 +751,9 @@ where
         /// `ByteSlice`, we know that this is preserved via `.deref()`. Writing
         /// `t` to the buffer will allow all of the bytes of `t` to be accessed
         /// as a `[u8]`, but because `T: IntoBytes`, we know that this is sound.
-        unsafe { ptr::write(b.deref_mut().as_mut_ptr().cast::<T>(), t) }
+        unsafe {
+            ptr::write(b.deref_mut().as_mut_ptr().cast::<T>(), t)
+        }
     }
 }
 

@@ -297,7 +297,9 @@ pub(crate) const unsafe fn transmute_unchecked<Src, Dst>(src: Src) -> Dst {
     ///     Effectively, writing to and then reading from a union with the C
     ///     representation is analogous to a transmute from the type used for
     ///     writing to the type used for reading.
-    unsafe { ManuallyDrop::into_inner(Transmute { src: ManuallyDrop::new(src) }.dst) }
+    unsafe {
+        ManuallyDrop::into_inner(Transmute { src: ManuallyDrop::new(src) }.dst)
+    }
 }
 
 /// Uses `allocate` to create a `Box<T>`.
@@ -385,7 +387,9 @@ where
         /// better. As written, Rust may assume that this consumes "exposed"
         /// provenance, and thus Rust may have to assume that this may consume
         /// provenance from any pointer whose provenance has been exposed.
-        unsafe { NonNull::new_unchecked(dangling) }
+        unsafe {
+            NonNull::new_unchecked(dangling)
+        }
     };
 
     let ptr = T::raw_from_ptr_len(ptr, meta);
@@ -622,7 +626,9 @@ pub(crate) mod polyfills {
         fn slice_from_raw_parts(data: Self, len: usize) -> NonNull<[T]> {
             let ptr = ptr::slice_from_raw_parts_mut(data.as_ptr(), len);
             /// SAFETY: `ptr` is converted from `data`, which is non-null.
-            unsafe { NonNull::new_unchecked(ptr) }
+            unsafe {
+                NonNull::new_unchecked(ptr)
+            }
         }
     }
 
@@ -673,7 +679,9 @@ pub(crate) mod polyfills {
                 None => {
                     /// SAFETY: The caller promises that the addition will not
                     /// underflow.
-                    unsafe { core::hint::unreachable_unchecked() }
+                    unsafe {
+                        core::hint::unreachable_unchecked()
+                    }
                 }
             }
         }
@@ -689,7 +697,9 @@ pub(crate) mod polyfills {
                 None => {
                     /// SAFETY: The caller promises that the subtraction will not
                     /// underflow.
-                    unsafe { core::hint::unreachable_unchecked() }
+                    unsafe {
+                        core::hint::unreachable_unchecked()
+                    }
                 }
             }
         }
@@ -705,7 +715,9 @@ pub(crate) mod polyfills {
                 None => {
                     /// SAFETY: The caller promises that the multiplication will
                     /// not overflow.
-                    unsafe { core::hint::unreachable_unchecked() }
+                    unsafe {
+                        core::hint::unreachable_unchecked()
+                    }
                 }
             }
         }

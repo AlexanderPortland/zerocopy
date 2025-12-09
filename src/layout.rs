@@ -550,7 +550,7 @@ impl DstLayout {
     ///   of the type are a multiple of its alignment, no size for the type will
     ///   result in a starting address which is properly aligned)
     ///
-    /// # Safety
+    /// # Safety Invariants
     ///
     /// The caller may assume that this implementation is correct, and may rely
     /// on that assumption for the soundness of their code. In particular, the
