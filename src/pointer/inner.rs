@@ -82,13 +82,11 @@ mod _def {
         ///
         /// # Safety
         ///
-        /// The caller promises that:
-        ///
-        /// 0. If `ptr`'s referent is not zero sized, then `ptr` has valid
-        ///    provenance for its referent, which is entirely contained in some
-        ///    Rust allocation, `A`.
-        /// 1. If `ptr`'s referent is not zero sized, `A` is guaranteed to live
-        ///    for at least `'a`.
+        /// * provenance: If `ptr`'s referent is not zero sized, then `ptr` has valid
+        ///   provenance for its referent, which is entirely contained in some
+        ///   Rust allocation, `A`.
+        /// * lifetime: If `ptr`'s referent is not zero sized, `A` is guaranteed to live
+        ///   for at least `'a`.
         #[inline(always)]
         #[must_use]
         pub const unsafe fn new(ptr: NonNull<T>) -> PtrInner<'a, T> {
@@ -183,7 +181,7 @@ impl<'a, T: ?Sized> PtrInner<'a, T> {
 
     /// # Safety
     ///
-    /// `U` must not be larger than the size of `self`'s referent.
+    /// * self_sz: `U` must not be larger than the size of `self`'s referent.
     #[must_use]
     #[inline(always)]
     pub unsafe fn cast<U>(self) -> PtrInner<'a, U> {
@@ -225,9 +223,9 @@ where
     ///
     /// # Safety
     ///
-    /// The caller promises that if `self`'s referent is not zero sized, then
-    /// a pointer constructed from its address with the given `meta` metadata
-    /// will address a subset of the allocation pointed to by `self`.
+    /// * subset: If `self`'s referent is not zero sized, then
+    ///   a pointer constructed from its address with the given `meta` metadata
+    ///   will address a subset of the allocation pointed to by `self`.
     #[inline]
     pub(crate) unsafe fn with_meta(self, meta: T::PointerMetadata) -> Self
     where
@@ -307,10 +305,9 @@ where
     ///
     /// # Safety
     ///
-    /// The caller promises that:
-    ///  - `l_len.get() <= self.meta()`.
+    /// * meta_len: `l_len.get() <= self.meta()`.
     ///
-    /// ## (Non-)Overlap
+    /// ## (Non-)Overlap:
     ///
     /// Given `let (left, right) = ptr.split_at(l_len)`, it is guaranteed that
     /// `left` and `right` are contiguous and non-overlapping if
@@ -410,7 +407,7 @@ impl<'a, T> PtrInner<'a, [T]> {
     ///
     /// # Safety
     ///
-    /// `range` is a valid range (`start <= end`) and `end <= self.meta()`.
+    /// * range: `range` is a valid range (`start <= end`) and `end <= self.meta()`.
     pub(crate) unsafe fn slice_unchecked(self, range: Range<usize>) -> Self {
         let base = self.as_non_null().cast::<T>().as_ptr();
 

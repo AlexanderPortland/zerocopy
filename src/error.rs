@@ -259,8 +259,7 @@ pub struct AlignmentError<Src, Dst: ?Sized> {
 impl<Src, Dst: ?Sized> AlignmentError<Src, Dst> {
     /// # Safety
     ///
-    /// The caller must ensure that `Dst`'s alignment requirement is greater
-    /// than one.
+    /// * alignment: The caller must ensure that `Dst`'s alignment requirement is greater than one.
     pub(crate) unsafe fn new_unchecked(src: Src) -> Self {
         // INVARIANT: The caller guarantees that `Dst`'s alignment requirement
         // is greater than one.

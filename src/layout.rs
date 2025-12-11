@@ -818,10 +818,9 @@ mod cast_from_raw {
         ///
         /// # Safety
         ///
-        /// `offset_delta_elems` and `elem_multiple` must be valid as described
-        /// above.
-        ///
-        /// `Src`'s alignment must not be smaller than `Dst`'s alignment.
+        /// * params: `offset_delta_elems` and `elem_multiple` must be valid as described
+        ///   above.
+        /// * alignment: `Src`'s alignment must not be smaller than `Dst`'s alignment.
         #[derive(Copy, Clone)]
         struct CastParams {
             offset_delta_elems: usize,
@@ -886,11 +885,10 @@ mod cast_from_raw {
 
             /// # Safety
             ///
-            /// `src_meta` describes a `Src` whose size is no larger than
-            /// `isize::MAX`.
-            ///
-            /// The returned metadata describes a `Dst` of the same size as the
-            /// original `Src`.
+            /// * src_meta: `src_meta` describes a `Src` whose size is no larger than
+            ///   `isize::MAX`.
+            /// * dst_meta: The returned metadata describes a `Dst` of the same size as the
+            ///   original `Src`.
             unsafe fn cast_metadata(self, src_meta: usize) -> usize {
                 #[allow(unused)]
                 use crate::util::polyfills::*;

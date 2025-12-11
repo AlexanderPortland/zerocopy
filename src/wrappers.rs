@@ -216,7 +216,7 @@ impl<T> Unalign<T> {
     ///
     /// # Safety
     ///
-    /// The caller must guarantee that `self` satisfies `align_of::<T>()`.
+    /// * alignment: The caller must guarantee that `self` satisfies `align_of::<T>()`.
     #[inline(always)]
     pub const unsafe fn deref_unchecked(&self) -> &T {
         /// SAFETY: `Unalign<T>` is `repr(transparent)`, so there is a valid `T`
@@ -241,7 +241,7 @@ impl<T> Unalign<T> {
     ///
     /// # Safety
     ///
-    /// The caller must guarantee that `self` satisfies `align_of::<T>()`.
+    /// * alignment: The caller must guarantee that `self` satisfies `align_of::<T>()`.
     #[inline(always)]
     pub unsafe fn deref_mut_unchecked(&mut self) -> &mut T {
         /// SAFETY: `self.get_mut_ptr()` returns a raw pointer to a valid `T` at
@@ -574,8 +574,8 @@ impl<T: ?Sized + KnownLayout> MaybeUninit<T> {
     ///
     /// # Safety
     ///
-    /// The caller must ensure that `self` is in an bit-valid state. Depending
-    /// on subsequent use, it may also need to be in a library-valid state.
+    /// * bit_valid: The caller must ensure that `self` is in an bit-valid state. Depending
+    ///   on subsequent use, it may also need to be in a library-valid state.
     #[inline(always)]
     pub unsafe fn assume_init(self) -> T
     where

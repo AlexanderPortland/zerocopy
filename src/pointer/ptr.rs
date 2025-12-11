@@ -77,14 +77,12 @@ mod def {
         ///
         /// # Safety
         ///
-        /// The caller promises that:
-        ///
-        /// 0. `ptr` conforms to the aliasing invariant of
-        ///    [`I::Aliasing`](invariant::Aliasing).
-        /// 1. `ptr` conforms to the alignment invariant of
-        ///    [`I::Alignment`](invariant::Alignment).
-        /// 2. `ptr` conforms to the validity invariant of
-        ///    [`I::Validity`](invariant::Validity).
+        /// * aliasing: `ptr` conforms to the aliasing invariant of
+        ///   [`I::Aliasing`](invariant::Aliasing).
+        /// * alignment: `ptr` conforms to the alignment invariant of
+        ///   [`I::Alignment`](invariant::Alignment).
+        /// * validity: `ptr` conforms to the validity invariant of
+        ///   [`I::Validity`](invariant::Validity).
         pub(crate) unsafe fn from_inner(ptr: PtrInner<'a, T>) -> Ptr<'a, T, I> {
             /// SAFETY: The caller has promised to satisfy all safety invariants
             /// of `Ptr`.
@@ -425,12 +423,13 @@ mod _conversions {
         ///
         /// The caller promises that `u = cast(p)` is a pointer cast with the
         /// following properties:
-        /// - `u` addresses a subset of the bytes addressed by `p`
-        /// - `u` has the same provenance as `p`
-        /// - If `I::Aliasing` is [`Shared`], it must not be possible for safe
+        ///
+        /// * subset: `u` addresses a subset of the bytes addressed by `p`.
+        /// * provenance: `u` has the same provenance as `p`.
+        /// * shared_aliasing: If `I::Aliasing` is [`Shared`], it must not be possible for safe
         ///   code, operating on a `&T` and `&U` with the same referent
-        ///   simultaneously, to cause undefined behavior
-        /// - It is sound to transmute a pointer of type `T` with aliasing
+        ///   simultaneously, to cause undefined behavior.
+        /// * transmute_soundness: It is sound to transmute a pointer of type `T` with aliasing
         ///   `I::Aliasing` and validity `I::Validity` to a pointer of type `U`
         ///   with aliasing `I::Aliasing` and validity `V`. This is a subtle
         ///   soundness requirement that is a function of `T`, `U`,
@@ -598,7 +597,7 @@ mod _transitions {
         ///
         /// # Safety
         ///
-        /// The caller promises that `self` satisfies the invariants `H`.
+        /// * invariants: The caller promises that `self` satisfies the invariants `H`.
         unsafe fn assume_invariants<H: Invariants>(self) -> Ptr<'a, T, H> {
             /// SAFETY: The caller has promised to satisfy all parameterized
             /// invariants of `Ptr`. `Ptr`'s other invariants are satisfied
@@ -626,8 +625,8 @@ mod _transitions {
         ///
         /// # Safety
         ///
-        /// The caller promises that `self` satisfies the aliasing requirement
-        /// of `A`.
+        /// * aliasing: The caller promises that `self` satisfies the aliasing requirement
+        ///   of `A`.
         #[inline]
         pub(crate) unsafe fn assume_aliasing<A: Aliasing>(
             self,
@@ -643,8 +642,8 @@ mod _transitions {
         ///
         /// # Safety
         ///
-        /// The caller promises that `self` satisfies the aliasing requirement
-        /// of `Exclusive`.
+        /// * aliasing: The caller promises that `self` satisfies the aliasing requirement
+        ///   of `Exclusive`.
         ///
         /// [`Exclusive`]: crate::pointer::invariant::Exclusive
         #[inline]
@@ -663,8 +662,8 @@ mod _transitions {
         ///
         /// # Safety
         ///
-        /// The caller promises that `self`'s referent conforms to the alignment
-        /// invariant of `T` if required by `A`.
+        /// * alignment: The caller promises that `self`'s referent conforms to the alignment
+        ///   invariant of `T` if required by `A`.
         #[inline]
         pub(crate) unsafe fn assume_alignment<A: Alignment>(
             self,
@@ -716,8 +715,8 @@ mod _transitions {
         ///
         /// # Safety
         ///
-        /// The caller promises that `self`'s referent conforms to the validity
-        /// requirement of `V`.
+        /// * validity: The caller promises that `self`'s referent conforms to the validity
+        ///   requirement of `V`.
         #[doc(hidden)]
         #[must_use]
         #[inline]
@@ -735,8 +734,8 @@ mod _transitions {
         ///
         /// # Safety
         ///
-        /// The caller promises to uphold the safety preconditions of
-        /// `self.assume_validity<invariant::Initialized>()`.
+        /// * preconditions: The caller promises to uphold the safety preconditions of
+        ///   `self.assume_validity<invariant::Initialized>()`.
         #[doc(hidden)]
         #[must_use]
         #[inline]
@@ -754,8 +753,8 @@ mod _transitions {
         ///
         /// # Safety
         ///
-        /// The caller promises to uphold the safety preconditions of
-        /// `self.assume_validity<Valid>()`.
+        /// * preconditions: The caller promises to uphold the safety preconditions of
+        ///   `self.assume_validity<Valid>()`.
         #[doc(hidden)]
         #[must_use]
         #[inline]
@@ -896,11 +895,12 @@ mod _casts {
         ///
         /// The caller promises that `u = cast(p)` is a pointer cast with the
         /// following properties:
-        /// - `u` addresses a subset of the bytes addressed by `p`
-        /// - `u` has the same provenance as `p`
-        /// - If `I::Aliasing` is [`Shared`], it must not be possible for safe
+        ///
+        /// * subset: `u` addresses a subset of the bytes addressed by `p`.
+        /// * provenance: `u` has the same provenance as `p`.
+        /// * shared_aliasing: If `I::Aliasing` is [`Shared`], it must not be possible for safe
         ///   code, operating on a `&T` and `&U` with the same referent
-        ///   simultaneously, to cause undefined behavior
+        ///   simultaneously, to cause undefined behavior.
         ///
         /// `cast_unsized_unchecked` guarantees that the pointer passed to
         /// `cast` will reference a byte sequence which is either contained
@@ -948,8 +948,9 @@ mod _casts {
         ///
         /// The caller promises that `u = cast(p)` is a pointer cast with the
         /// following properties:
-        /// - `u` addresses a subset of the bytes addressed by `p`
-        /// - `u` has the same provenance as `p`
+        ///
+        /// * subset: `u` addresses a subset of the bytes addressed by `p`.
+        /// * provenance: `u` has the same provenance as `p`.
         #[doc(hidden)]
         #[inline]
         pub unsafe fn cast_unsized<U, F, R>(

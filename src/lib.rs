@@ -2918,7 +2918,7 @@ fn swap<T, U>((t, u): (T, U)) -> (U, T) {
 
 /// # Safety
 ///
-/// All bytes of `candidate` must be initialized.
+/// * initialized: All bytes of `candidate` must be initialized.
 #[inline(always)]
 unsafe fn try_read_from<S, T: TryFromBytes>(
     source: S,

@@ -754,9 +754,9 @@ impl<Src, Dst> Wrap<Src, Dst> {
 
 impl<'a, Src, Dst> Wrap<&'a Src, &'a Dst> {
     /// # Safety
-    /// The caller must guarantee that:
-    /// - `Src: IntoBytes + Immutable`
-    /// - `Dst: FromBytes + Immutable`
+    ///
+    /// * src_traits: The caller must guarantee that `Src: IntoBytes + Immutable`.
+    /// * dst_traits: The caller must guarantee that `Dst: FromBytes + Immutable`.
     ///
     /// # PME
     ///
