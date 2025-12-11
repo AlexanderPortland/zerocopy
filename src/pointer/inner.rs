@@ -181,7 +181,7 @@ impl<'a, T: ?Sized> PtrInner<'a, T> {
 
     /// # Safety
     ///
-    /// * self_sz: `U` must not be larger than the size of `self`'s referent.
+    /// * size: `U` must not be larger than the size of `self`'s referent.
     #[must_use]
     #[inline(always)]
     pub unsafe fn cast<U>(self) -> PtrInner<'a, U> {
@@ -305,7 +305,7 @@ where
     ///
     /// # Safety
     ///
-    /// * meta_len: `l_len.get() <= self.meta()`.
+    /// * in-bounds: `l_len.get() <= self.meta()`.
     ///
     /// ## (Non-)Overlap:
     ///
@@ -615,8 +615,8 @@ impl<'a> PtrInner<'a, [u8]> {
             Err(MetadataCastError::Size) => return Err(CastError::Size(SizeError::new(self))),
         };
 
-        /// SAFETY: `validate_cast_and_convert_metadata` promises to return
-        /// `split_at <= self.meta()`.
+        /// SAFETY: `split_at` is in bounds as `validate_cast_and_convert_metadata` promises
+        /// to return `split_at <= self.meta()`.
         ///
         /// Lemma 0: `l_slice` and `r_slice` are non-overlapping. Proof: By
         /// contract on `PtrInner::split_at_unchecked`, the produced `PtrInner`s

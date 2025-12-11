@@ -400,7 +400,8 @@ mod _conversions {
             /// - This cast is a no-op, and so trivially preserves address,
             ///   referent size, and provenance
             /// - It is trivially sound to have multiple `&T` referencing the same
-            ///   referent simultaneously
+            ///   referent simultaneously (shared-aliasing)
+            // TODO(aportlan): is this right?
             /// - By `T: TransmuteFromPtr<T, I::Aliasing, I::Validity, V>`, it is
             ///   sound to perform this transmute.
             let ptr = unsafe { self.transmute_unchecked(SizeEq::cast_from_raw) };
@@ -424,12 +425,12 @@ mod _conversions {
         /// The caller promises that `u = cast(p)` is a pointer cast with the
         /// following properties:
         ///
-        /// * subset: `u` addresses a subset of the bytes addressed by `p`.
+        /// * address: `u` addresses a subset of the bytes addressed by `p`.
         /// * provenance: `u` has the same provenance as `p`.
-        /// * shared_aliasing: If `I::Aliasing` is [`Shared`], it must not be possible for safe
+        /// * shared-aliasing: If `I::Aliasing` is [`Shared`], it must not be possible for safe
         ///   code, operating on a `&T` and `&U` with the same referent
         ///   simultaneously, to cause undefined behavior.
-        /// * transmute_soundness: It is sound to transmute a pointer of type `T` with aliasing
+        /// * transmute-soundness: It is sound to transmute a pointer of type `T` with aliasing
         ///   `I::Aliasing` and validity `I::Validity` to a pointer of type `U`
         ///   with aliasing `I::Aliasing` and validity `V`. This is a subtle
         ///   soundness requirement that is a function of `T`, `U`,
@@ -734,7 +735,7 @@ mod _transitions {
         ///
         /// # Safety
         ///
-        /// * preconditions: The caller promises to uphold the safety preconditions of
+        /// * initialized-validity: The caller promises to uphold the safety preconditions of
         ///   `self.assume_validity<invariant::Initialized>()`.
         #[doc(hidden)]
         #[must_use]
@@ -753,7 +754,7 @@ mod _transitions {
         ///
         /// # Safety
         ///
-        /// * preconditions: The caller promises to uphold the safety preconditions of
+        /// * bit-validity: The caller promises to uphold the safety preconditions of
         ///   `self.assume_validity<Valid>()`.
         #[doc(hidden)]
         #[must_use]
@@ -867,7 +868,7 @@ mod _transitions {
         #[must_use]
         #[inline]
         pub fn forget_aligned(self) -> Ptr<'a, T, (I::Aliasing, Unaligned, I::Validity)> {
-            /// SAFETY: `Unaligned` is less restrictive than `Aligned`.
+            /// SAFETY: The invariants of `Unaligned` are less restrictive than those for `Aligned`.
             unsafe {
                 self.assume_invariants()
             }
@@ -949,7 +950,7 @@ mod _casts {
         /// The caller promises that `u = cast(p)` is a pointer cast with the
         /// following properties:
         ///
-        /// * subset: `u` addresses a subset of the bytes addressed by `p`.
+        /// * address: `u` addresses a subset of the bytes addressed by `p`.
         /// * provenance: `u` has the same provenance as `p`.
         #[doc(hidden)]
         #[inline]

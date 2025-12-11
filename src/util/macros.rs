@@ -904,10 +904,10 @@ macro_rules! unsafe_with_size_eq {
         if 1 == 0 {
             let ptr = <$t as KnownLayout>::raw_dangling();
             #[allow(unused_unsafe)]
-            /// SAFETY: This call is never executed.
+            /// SAFETY: This call is never executed. (provenance/lifetime irrelevant)
             let ptr = unsafe { crate::pointer::PtrInner::new(ptr) };
             #[allow(unused_unsafe)]
-            /// SAFETY: This call is never executed.
+            /// SAFETY: This call is never executed. (provenance/lifetime irrelevant)
             let ptr = unsafe { cast!(ptr) };
             let _ = <$dst<$u> as SizeEq<$src<$t>>>::cast_from_raw(ptr);
         }

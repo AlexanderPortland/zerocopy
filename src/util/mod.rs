@@ -313,7 +313,7 @@ pub(crate) const unsafe fn transmute_unchecked<Src, Dst>(src: Src) -> Dst {
 ///
 /// * allocate: `allocate` must be either `alloc::alloc::alloc` or
 ///   `alloc::alloc::alloc_zeroed`.
-/// * bit_validity: The referent of the box returned by `new_box`
+/// * bit-validity: The referent of the box returned by `new_box`
 ///   has the same bit-validity as the referent of the pointer returned by the
 ///   given `allocate` and sufficient size to store `T` with `meta`.
 #[must_use = "has no side effects (other than allocation)"]
@@ -566,7 +566,7 @@ mod len_of {
             // `elems` has size not larger than `isize::MAX`.
             let elems = meta.unwrap_or(elems);
 
-            /// SAFETY: See Lemma 2.
+            /// SAFETY: See Lemma 2 (wrt size).
             let elems = unsafe { MetadataOf::new_unchecked(elems) };
 
             /// SAFETY: Let `size` be the size of a `&T` with metadata `elems`.

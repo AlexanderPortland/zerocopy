@@ -626,11 +626,12 @@ where
 
     /// SAFETY: Since `Src: IntoBytes`, and since `size_of::<Src>() ==
     /// size_of::<Dst>()` by the preceding assertion, all of `mu_dst`'s bytes are
-    /// initialized.
+    /// initialized and valid.
     let ptr = unsafe { ptr.assume_validity::<invariant::Initialized>() };
 
     /// SAFETY: `MaybeUninit<T>` and `T` have the same size [1], so this cast
-    /// preserves the referent's size. This cast preserves provenance.
+    /// preserves the referent's size & addresses a subset of the bits addressed by `T`.
+    /// This cast preserves provenance.
     ///
     /// [1] Per https://doc.rust-lang.org/1.81.0/std/mem/union.MaybeUninit.html#layout-1:
     ///

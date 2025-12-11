@@ -68,7 +68,7 @@ mod def {
         ///
         /// # Safety
         ///
-        /// * bytes: `bytes` dereferences (via [`deref`], [`deref_mut`], and [`into`]) to
+        /// * size&alignment: `bytes` dereferences (via [`deref`], [`deref_mut`], and [`into`]) to
         ///   a byte slice which is aligned to `T`'s alignment and whose size is a
         ///   valid size for `T`.
         ///
@@ -90,7 +90,9 @@ mod def {
         /// * methods: The caller promises not to call methods on the returned
         ///   [`ByteSlice`] other than `ByteSlice` methods (for example, via
         ///   `Any::downcast_ref`).
-        /// * postcondition: `as_byte_slice` promises to return a `ByteSlice` whose referent is
+        ///
+        /// # Safety Invariants
+        ///  `as_byte_slice` promises to return a `ByteSlice` whose referent is
         ///   validly-aligned for `T` and has a valid size for `T`.
         pub(crate) unsafe fn as_byte_slice(&self) -> &impl ByteSlice {
             // INVARIANTS: The caller promises not to call methods other than
@@ -112,7 +114,10 @@ mod def {
         /// * methods: The caller promises not to call methods on the returned
         ///   [`ByteSliceMut`] other than `ByteSliceMut` methods (for example, via
         ///   `Any::downcast_mut`).
-        /// * postcondition: `as_byte_slice` promises to return a `ByteSlice` whose referent is
+        ///
+        /// # Safety Invariants
+        ///
+        ///   `as_byte_slice` promises to return a `ByteSlice` whose referent is
         ///   validly-aligned for `T` and has a valid size for `T`.
         pub(crate) unsafe fn as_byte_slice_mut(&mut self) -> &mut impl ByteSliceMut {
             // INVARIANTS: The caller promises not to call methods other than
@@ -134,7 +139,9 @@ mod def {
         /// * methods: The caller promises not to call methods on the returned
         ///   [`IntoByteSlice`] other than `IntoByteSlice` methods (for example,
         ///   via `Any::downcast_ref`).
-        /// * postcondition: `as_byte_slice` promises to return a `ByteSlice` whose referent is
+        ///
+        /// # Safety Invariants
+        ///   `as_byte_slice` promises to return a `ByteSlice` whose referent is
         ///   validly-aligned for `T` and has a valid size for `T`.
         pub(crate) unsafe fn into_byte_slice(self) -> impl IntoByteSlice<'a> {
             // INVARIANTS: The caller promises not to call methods other than
@@ -156,7 +163,10 @@ mod def {
         /// * methods: The caller promises not to call methods on the returned
         ///   [`IntoByteSliceMut`] other than `IntoByteSliceMut` methods (for
         ///   example, via `Any::downcast_mut`).
-        /// * postcondition: `as_byte_slice` promises to return a `ByteSlice` whose referent is
+        ///
+        /// # Safety Invariants
+        ///
+        ///   `as_byte_slice` promises to return a `ByteSlice` whose referent is
         ///   validly-aligned for `T` and has a valid size for `T`.
         pub(crate) unsafe fn into_byte_slice_mut(self) -> impl IntoByteSliceMut<'a> {
             // INVARIANTS: The caller promises not to call methods other than
@@ -585,7 +595,7 @@ where
             return Err(SizeError::new(source).into());
         };
         /// SAFETY: The preceding `source.len().checked_sub(expected_len)`
-        /// guarantees that `split_at` is in-bounds.
+        /// guarantees that `split_at` is in-bounds (i.e. `mid <= self.deref().len()`).
         let (bytes, suffix) = unsafe { source.split_at_unchecked(split_at) };
         Self::from_bytes(suffix).map(move |l| (bytes, l))
     }

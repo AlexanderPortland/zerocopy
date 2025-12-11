@@ -77,7 +77,9 @@ pub unsafe trait SplitAt: KnownLayout<PointerMetadata = usize> {
     #[must_use]
     unsafe fn split_at_unchecked(&self, l_len: usize) -> Split<&Self> {
         /// SAFETY: By precondition on the caller, `l_len <= self.len()`.
-        unsafe { Split::<&Self>::new(self, l_len) }
+        unsafe {
+            Split::<&Self>::new(self, l_len)
+        }
     }
 
     /// Attempts to split `self` in two.
@@ -125,7 +127,9 @@ pub unsafe trait SplitAt: KnownLayout<PointerMetadata = usize> {
             |l_len| {
                 /// SAFETY: We have ensured that `l_len <= self.len()` (by
                 /// post-condition on `MetadataOf::new_in_bounds`)
-                unsafe { Split::new(self, l_len.get()) }
+                unsafe {
+                    Split::new(self, l_len.get())
+                }
             },
         )
     }
@@ -140,7 +144,9 @@ pub unsafe trait SplitAt: KnownLayout<PointerMetadata = usize> {
     #[must_use]
     unsafe fn split_at_mut_unchecked(&mut self, l_len: usize) -> Split<&mut Self> {
         /// SAFETY: By precondition on the caller, `l_len <= self.len()`.
-        unsafe { Split::<&mut Self>::new(self, l_len) }
+        unsafe {
+            Split::<&mut Self>::new(self, l_len)
+        }
     }
 
     /// Attempts to split `self` in two.
@@ -197,7 +203,9 @@ pub unsafe trait SplitAt: KnownLayout<PointerMetadata = usize> {
             |l_len| {
                 /// SAFETY: We have ensured that `l_len <= self.len()` (by
                 /// post-condition on `MetadataOf::new_in_bounds`)
-                unsafe { Split::new(self, l_len.get()) }
+                unsafe {
+                    Split::new(self, l_len.get())
+                }
             },
         )
     }
@@ -262,7 +270,9 @@ where
         let source = Ptr::from_ref(self.source);
         /// SAFETY: `Ptr::from_ref(self.source)` points to exactly `self.source`
         /// and thus maintains the invariants of `self` with respect to `l_len`.
-        unsafe { Split::new(source, self.l_len) }
+        unsafe {
+            Split::new(source, self.l_len)
+        }
     }
 
     /// Produces the split parts of `self`, using [`Immutable`] to ensure that
@@ -498,7 +508,9 @@ where
         let source = Ptr::from_mut(self.source);
         /// SAFETY: `Ptr::from_mut(self.source)` points to exactly `self.source`,
         /// and thus maintains the invariants of `self` with respect to `l_len`.
-        unsafe { Split::new(source, self.l_len) }
+        unsafe {
+            Split::new(source, self.l_len)
+        }
     }
 
     /// Produces the split parts of `self`, using [`IntoBytes`] to ensure that
@@ -690,7 +702,9 @@ where
         /// SAFETY: `self.source.as_ref()` points to exactly the same referent as
         /// `self.source` and thus maintains the invariants of `self` with
         /// respect to `l_len`.
-        unsafe { Split::new(self.source.as_ref(), self.l_len) }
+        unsafe {
+            Split::new(self.source.as_ref(), self.l_len)
+        }
     }
 
     fn into_mut(self) -> Split<&'a mut T>
@@ -700,15 +714,19 @@ where
         /// SAFETY: `self.source.as_mut()` points to exactly the same referent as
         /// `self.source` and thus maintains the invariants of `self` with
         /// respect to `l_len`.
-        unsafe { Split::new(self.source.unify_invariants().as_mut(), self.l_len) }
+        unsafe {
+            Split::new(self.source.unify_invariants().as_mut(), self.l_len)
+        }
     }
 
     /// Produces the length of `self`'s left part.
     #[inline(always)]
     fn l_len(&self) -> MetadataOf<T> {
         /// SAFETY: By invariant on `Split`, `self.l_len` is not greater than the
-        /// length of `self.source`.
-        unsafe { MetadataOf::<T>::new_unchecked(self.l_len) }
+        /// size of `self.source`.
+        unsafe {
+            MetadataOf::<T>::new_unchecked(self.l_len)
+        }
     }
 
     /// Produces the split parts of `self`, using [`Immutable`] to ensure that
@@ -719,8 +737,10 @@ where
         T: Immutable,
         I: Invariants<Aliasing = Shared>,
     {
-        /// SAFETY: `Aliasing = Shared` and `T: Immutable`.
-        unsafe { self.via_unchecked() }
+        /// SAFETY: `Aliasing = Shared` and `T: Immutable`, so we don't have to worry about padding.
+        unsafe {
+            self.via_unchecked()
+        }
     }
 
     /// Produces the split parts of `self`, using [`IntoBytes`] to ensure that
@@ -733,7 +753,9 @@ where
         /// SAFETY: By `T: IntoBytes`, `T` has no padding for any length.
         /// Consequently, `T` can be split into non-overlapping parts at any
         /// index.
-        unsafe { self.via_unchecked() }
+        unsafe {
+            self.via_unchecked()
+        }
     }
 
     /// Produces the split parts of `self`, using [`Unaligned`] to ensure that
@@ -749,7 +771,9 @@ where
         /// `repr(C)` or `repr(transparent)` ensures that no padding is placed
         /// after the final element of the trailing slice. Consequently, `T` can
         /// be split into strictly non-overlapping parts any any index.
-        unsafe { self.via_unchecked() }
+        unsafe {
+            self.via_unchecked()
+        }
     }
 
     /// Produces the split parts of `self`, using a dynamic check to ensure that
