@@ -3195,14 +3195,14 @@ pub unsafe trait FromZeros: TryFromBytes {
 
         // FIXME(#429): Add a "SAFETY" comment and remove this `allow`.
         #[allow(clippy::undocumented_unsafe_blocks)]
-        /// SAFETY: TODO
+        // SAFETY: TODO
         let ptr = unsafe { alloc::alloc::alloc_zeroed(layout).cast::<Self>() };
         if ptr.is_null() {
             return Err(AllocError);
         }
         // FIXME(#429): Add a "SAFETY" comment and remove this `allow`.
         #[allow(clippy::undocumented_unsafe_blocks)]
-        /// SAFETY: TODO
+        // SAFETY: TODO
         Ok(unsafe { Box::from_raw(ptr) })
     }
 

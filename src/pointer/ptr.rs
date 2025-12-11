@@ -509,7 +509,7 @@ mod _conversions {
             ///   and the returned `Ptr` permit the same set of bit patterns in
             ///   their referents, and so neither can be used to violate the
             ///   validity of the other.
-            /// TODO(aportlan): "shared-aliasing", "transmute-soundness"
+            // TODO(aportlan): "shared-aliasing", "transmute-soundness"
             let ptr = unsafe { self.transmute_unchecked(PtrInner::cast_sized) };
             ptr.bikeshed_recall_aligned()
         }
@@ -1221,7 +1221,7 @@ mod _casts {
             ///   `UnsafeCell<T>` has the same in-memory representation as its
             ///   inner type `T`. A consequence of this guarantee is that it is
             ///   possible to convert between `T` and `UnsafeCell<T>`.
-            /// TODO(aportlan): "shared-aliasing", "transmute-soundness"
+            // TODO(aportlan): "shared-aliasing", "transmute-soundness"
             #[allow(clippy::as_conversions)]
             let ptr = unsafe { self.transmute_unchecked(|ptr| cast!(ptr)) };
 
