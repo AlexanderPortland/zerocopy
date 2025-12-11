@@ -313,7 +313,9 @@ pub(crate) const unsafe fn transmute_unchecked<Src, Dst>(src: Src) -> Dst {
 ///
 /// * allocate: `allocate` must be either `alloc::alloc::alloc` or
 ///   `alloc::alloc::alloc_zeroed`.
-/// * bit-validity: The referent of the box returned by `new_box`
+///
+/// # Safety Invariants
+///   The referent of the box returned by `new_box`
 ///   has the same bit-validity as the referent of the pointer returned by the
 ///   given `allocate` and sufficient size to store `T` with `meta`.
 #[must_use = "has no side effects (other than allocation)"]

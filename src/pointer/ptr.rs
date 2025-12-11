@@ -170,9 +170,9 @@ mod _conversions {
         pub fn from_ref(ptr: &'a T) -> Self {
             let inner = PtrInner::from_ref(ptr);
             /// SAFETY:
-            /// 0. `ptr`, by invariant on `&'a T`, conforms to the aliasing
+            /// 0. `ptr`, by invariant on `&'a T`, conforms to the `Aliasing` aliasing
             ///    invariant of `Shared`.
-            /// 1. `ptr`, by invariant on `&'a T`, conforms to the alignment
+            /// 1. `ptr`, by invariant on `&'a T`, conforms to the `Alignment` alignment
             ///    invariant of `Aligned`.
             /// 2. `ptr`'s referent, by invariant on `&'a T`, is a bit-valid `T`.
             ///    This satisfies the requirement that a `Ptr<T, (_, _, Valid)>`
@@ -406,8 +406,8 @@ mod _conversions {
             ///   sound to perform this transmute.
             let ptr = unsafe { self.transmute_unchecked(SizeEq::cast_from_raw) };
             /// SAFETY: `self` and `ptr` have the same address and referent type.
-            /// Therefore, if `self` satisfies `I::Alignment`, then so does
-            /// `ptr`.
+            /// Therefore, if `self` satisfies the alignment invariant of
+            /// `I::Alignment`, then so does `ptr`.
             unsafe {
                 ptr.assume_alignment::<I::Alignment>()
             }
@@ -509,6 +509,7 @@ mod _conversions {
             ///   and the returned `Ptr` permit the same set of bit patterns in
             ///   their referents, and so neither can be used to violate the
             ///   validity of the other.
+            /// TODO(aportlan): "shared-aliasing", "transmute-soundness"
             let ptr = unsafe { self.transmute_unchecked(PtrInner::cast_sized) };
             ptr.bikeshed_recall_aligned()
         }
@@ -1220,6 +1221,7 @@ mod _casts {
             ///   `UnsafeCell<T>` has the same in-memory representation as its
             ///   inner type `T`. A consequence of this guarantee is that it is
             ///   possible to convert between `T` and `UnsafeCell<T>`.
+            /// TODO(aportlan): "shared-aliasing", "transmute-soundness"
             #[allow(clippy::as_conversions)]
             let ptr = unsafe { self.transmute_unchecked(|ptr| cast!(ptr)) };
 
@@ -1253,9 +1255,9 @@ mod _project {
             /// SAFETY:
             /// 0. `elem` conforms to the aliasing invariant of `I::Aliasing`
             ///    because projection does not impact the aliasing invariant.
-            /// 1. `elem`, conditionally, conforms to the validity invariant of
+            /// 1. `elem`, conditionally, conforms to the alignment invariant of
             ///    `I::Alignment`. If `elem` is projected from data well-aligned
-            ///    for `[T]`, `elem` will be valid for `T`.
+            ///    for `[T]`, `elem` will be aligned for `T`.
             /// 2. FIXME: Need to cite facts about `[T]`'s layout (same for the
             ///    preceding points)
             self.as_inner().iter().map(|elem| unsafe { Ptr::from_inner(elem) })

@@ -885,7 +885,7 @@ mod cast_from_raw {
 
             /// # Safety
             ///
-            /// * src-sz: `src_meta` describes a `Src` whose size is no larger than
+            /// * src-size: `src_meta` describes a `Src` whose size is no larger than
             ///   `isize::MAX`.
             ///
             /// # Safety Invariants
@@ -944,7 +944,7 @@ mod cast_from_raw {
         /// allocation. Since `dst` has the same address as `src` and was
         /// constructed using provenance-preserving operations, it addresses a
         /// subset of those bytes, and has provenance for those bytes.
-        // TODO(aportlan): why doesn't it talk about lifetimes?
+        /// TODO(aportlan): why doesn't it talk about lifetimes?
         unsafe {
             PtrInner::new(dst)
         }

@@ -808,7 +808,7 @@ pub unsafe trait KnownLayout {
     ///
     /// Returns `None` if the resulting length would not fit in an `usize`.
     ///
-    /// # Safety
+    /// # Safety Invariants
     ///
     /// Callers may assume that `size_of_val_raw` always returns the correct
     /// size.
@@ -3195,12 +3195,14 @@ pub unsafe trait FromZeros: TryFromBytes {
 
         // FIXME(#429): Add a "SAFETY" comment and remove this `allow`.
         #[allow(clippy::undocumented_unsafe_blocks)]
+        /// SAFETY: TODO
         let ptr = unsafe { alloc::alloc::alloc_zeroed(layout).cast::<Self>() };
         if ptr.is_null() {
             return Err(AllocError);
         }
         // FIXME(#429): Add a "SAFETY" comment and remove this `allow`.
         #[allow(clippy::undocumented_unsafe_blocks)]
+        /// SAFETY: TODO
         Ok(unsafe { Box::from_raw(ptr) })
     }
 
@@ -3233,7 +3235,7 @@ pub unsafe trait FromZeros: TryFromBytes {
     where
         Self: KnownLayout<PointerMetadata = usize>,
     {
-        /// SAFETY: `alloc::alloc::alloc_zeroed` is a valid argument of
+        /// SAFETY: `alloc::alloc::alloc_zeroed` is a valid `allocate` argument of
         /// `new_box`. The referent of the pointer returned by `alloc_zeroed`
         /// (and, consequently, the `Box` derived from it) is a valid instance of
         /// `Self`, because `Self` is `FromZeros`.

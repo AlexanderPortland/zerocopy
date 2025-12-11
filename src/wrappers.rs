@@ -560,7 +560,7 @@ impl<T: ?Sized + KnownLayout> MaybeUninit<T> {
     #[cfg(feature = "alloc")]
     #[inline]
     pub fn new_boxed_uninit(meta: T::PointerMetadata) -> Result<Box<Self>, AllocError> {
-        /// SAFETY: `alloc::alloc::alloc_zeroed` is a valid argument of
+        /// SAFETY: `alloc::alloc::alloc_zeroed` is a valid `allocate` argument of
         /// `new_box`. The referent of the pointer returned by `alloc` (and,
         /// consequently, the `Box` derived from it) is a valid instance of
         /// `Self`, because `Self` is `MaybeUninit` and thus admits arbitrary
