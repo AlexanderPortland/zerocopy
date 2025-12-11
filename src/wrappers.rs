@@ -170,7 +170,9 @@ impl<T> Unalign<T> {
         ///
         /// FIXME(https://github.com/rust-lang/rust/issues/73255): Destructure
         /// instead of using unsafe.
-        unsafe { crate::util::transmute_unchecked(self) }
+        unsafe {
+            crate::util::transmute_unchecked(self)
+        }
     }
 
     /// Attempts to return a reference to the wrapped `T`, failing if `self` is
@@ -226,7 +228,9 @@ impl<T> Unalign<T> {
         /// We use `mem::transmute` instead of `&*self.get_ptr()` because
         /// dereferencing pointers is not stable in `const` on our current MSRV
         /// (1.56 as of this writing).
-        unsafe { mem::transmute(self) }
+        unsafe {
+            mem::transmute(self)
+        }
     }
 
     /// Returns a mutable reference to the wrapped `T` without checking
@@ -245,12 +249,14 @@ impl<T> Unalign<T> {
         /// but the caller has promised that `self` is properly aligned, so we
         /// know that the pointer itself is aligned, and thus that it is sound to
         /// create a reference to a `T` at this memory location.
-        unsafe { &mut *self.get_mut_ptr() }
+        unsafe {
+            &mut *self.get_mut_ptr()
+        }
     }
 
     /// Gets an unaligned raw pointer to the inner `T`.
     ///
-    /// # Safety
+    /// # Safety Invariants
     ///
     /// The returned raw pointer is not necessarily aligned to
     /// `align_of::<T>()`. Most functions which operate on raw pointers require
@@ -289,7 +295,7 @@ impl<T> Unalign<T> {
     /// [`read_unaligned`]: core::ptr::read_unaligned
     // FIXME(https://github.com/rust-lang/rust/issues/57349): Make this `const`.
     #[inline(always)]
-    pub fn get_mut_ptr(&mut self) -> *mut T {
+    pub unsafe fn get_mut_ptr(&mut self) -> *mut T {
         ptr::addr_of_mut!(self.0)
     }
 
@@ -347,7 +353,9 @@ impl<T> Unalign<T> {
                 /// SAFETY: `slf` is the raw pointer value of `self`. We know it
                 /// is valid for writes and properly aligned because `self` is a
                 /// mutable reference, which guarantees both of these properties.
-                unsafe { ptr::write(self.slf, Unalign::new(copy)) };
+                unsafe {
+                    ptr::write(self.slf, Unalign::new(copy))
+                };
             }
         }
 
@@ -505,7 +513,9 @@ impl<T: ?Sized + KnownLayout> MaybeUninit<T> {
         ///
         /// These two transmutes are collapsed into one so we don't need to add a
         /// `T::MaybeUninit: Sized` bound to this function's `where` clause.
-        unsafe { crate::util::transmute_unchecked(val) }
+        unsafe {
+            crate::util::transmute_unchecked(val)
+        }
     }
 
     /// Constructs an uninitialized `MaybeUninit<T>`.
@@ -533,7 +543,9 @@ impl<T: ?Sized + KnownLayout> MaybeUninit<T> {
         ///
         ///   `MaybeUninit<T>` is guaranteed to have the same size, alignment,
         ///   and ABI as `T`
-        unsafe { crate::util::transmute_unchecked(uninit) }
+        unsafe {
+            crate::util::transmute_unchecked(uninit)
+        }
     }
 
     /// Creates a `Box<MaybeUninit<T>>`.
@@ -553,7 +565,9 @@ impl<T: ?Sized + KnownLayout> MaybeUninit<T> {
         /// consequently, the `Box` derived from it) is a valid instance of
         /// `Self`, because `Self` is `MaybeUninit` and thus admits arbitrary
         /// (un)initialized bytes.
-        unsafe { crate::util::new_box(meta, alloc::alloc::alloc) }
+        unsafe {
+            crate::util::new_box(meta, alloc::alloc::alloc)
+        }
     }
 
     /// Extracts the value from the `MaybeUninit<T>` container.
@@ -569,7 +583,9 @@ impl<T: ?Sized + KnownLayout> MaybeUninit<T> {
         Self: Sized,
     {
         /// SAFETY: The caller guarantees that `self` is in an bit-valid state.
-        unsafe { crate::util::transmute_unchecked(self) }
+        unsafe {
+            crate::util::transmute_unchecked(self)
+        }
     }
 }
 

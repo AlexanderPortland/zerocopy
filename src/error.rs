@@ -347,7 +347,9 @@ impl<Src, Dst: ?Sized + Unaligned> From<AlignmentError<Src, Dst>> for Infallible
         /// alignment requirement is greater than one. In this block, `Dst:
         /// Unaligned`, which means that its alignment requirement is equal to
         /// one. Thus, it's not possible to reach here at runtime.
-        unsafe { core::hint::unreachable_unchecked() }
+        unsafe {
+            core::hint::unreachable_unchecked()
+        }
     }
 }
 
@@ -359,7 +361,9 @@ impl<Src, Dst> AlignmentError<Src, Dst> {
         assert_ne!(core::mem::align_of::<Dst>(), 1);
         /// SAFETY: The preceding assertion guarantees that `Dst`'s alignment
         /// requirement is greater than one.
-        unsafe { AlignmentError::new_unchecked(src) }
+        unsafe {
+            AlignmentError::new_unchecked(src)
+        }
     }
 }
 

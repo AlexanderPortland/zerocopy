@@ -906,7 +906,7 @@ pub trait PointerMetadata: Copy + Eq + Debug {
     /// `layout` must describe a slice DST. Otherwise, `size_for_metadata` may
     /// panic.
     ///
-    /// # Safety
+    /// # Safety Invariants
     ///
     /// `size_for_metadata` promises to only return `None` if the resulting size
     /// would not fit in a `usize`.

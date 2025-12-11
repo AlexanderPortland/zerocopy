@@ -142,7 +142,7 @@ impl DstLayout {
     ///
     /// This method does not panic.
     ///
-    /// # Safety
+    /// # Safety Invariants
     ///
     /// If `self` describes the size and alignment of type that lacks static
     /// shallow padding, unsafe code may assume that the result of this method
@@ -160,7 +160,7 @@ impl DstLayout {
     ///
     /// This function panics if the supplied `repr_align` is not a power of two.
     ///
-    /// # Safety
+    /// # Safety Invariants
     ///
     /// Unsafe code may assume that the contract of this function is satisfied.
     #[doc(hidden)]
@@ -184,7 +184,7 @@ impl DstLayout {
     /// Constructs a `DstLayout` which describes `T` and assumes `T` may contain
     /// padding.
     ///
-    /// # Safety
+    /// # Safety Invariants
     ///
     /// Unsafe code may assume that `DstLayout` is the correct layout for `T`.
     #[doc(hidden)]
@@ -208,7 +208,7 @@ impl DstLayout {
     /// Constructs a `DstLayout` which describes a `T` that does not contain
     /// padding.
     ///
-    /// # Safety
+    /// # Safety Invariants
     ///
     /// Unsafe code may assume that `DstLayout` is the correct layout for `T`.
     #[doc(hidden)]
@@ -220,7 +220,7 @@ impl DstLayout {
 
     /// Constructs a `DstLayout` which describes `[T]`.
     ///
-    /// # Safety
+    /// # Safety Invariants
     ///
     /// Unsafe code may assume that `DstLayout` is the correct layout for `[T]`.
     pub(crate) const fn for_slice<T>() -> DstLayout {
@@ -251,7 +251,7 @@ impl DstLayout {
     /// This method cannot be used to match the layout of a record with the
     /// default representation, as that representation is mostly unspecified.
     ///
-    /// # Safety
+    /// # Safety Invariants
     ///
     /// For any definition of a `repr(C)` struct, if this method is invoked with
     /// alignment modifiers and fields corresponding to that definition, the
@@ -308,7 +308,7 @@ impl DstLayout {
     /// This method cannot be used to match the layout of a record with the
     /// default representation, as that representation is mostly unspecified.
     ///
-    /// # Safety
+    /// # Safety Invariants
     ///
     /// If a (potentially hypothetical) valid `repr(C)` Rust type begins with
     /// fields whose layout are `self`, and those fields are immediately
@@ -459,7 +459,7 @@ impl DstLayout {
     /// This method cannot be used to match the layout of a record with the
     /// default representation, as that representation is mostly unspecified.
     ///
-    /// # Safety
+    /// # Safety Invariants
     ///
     /// If a (potentially hypothetical) valid `repr(C)` type begins with fields
     /// whose layout are `self` followed only by zero or more bytes of trailing
