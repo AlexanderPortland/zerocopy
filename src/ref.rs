@@ -68,9 +68,9 @@ mod def {
         ///
         /// # Safety
         ///
-        /// `bytes` dereferences (via [`deref`], [`deref_mut`], and [`into`]) to
-        /// a byte slice which is aligned to `T`'s alignment and whose size is a
-        /// valid size for `T`.
+        /// * bytes: `bytes` dereferences (via [`deref`], [`deref_mut`], and [`into`]) to
+        ///   a byte slice which is aligned to `T`'s alignment and whose size is a
+        ///   valid size for `T`.
         ///
         /// [`deref`]: core::ops::Deref::deref
         /// [`deref_mut`]: core::ops::DerefMut::deref_mut
@@ -87,12 +87,11 @@ mod def {
         ///
         /// # Safety
         ///
-        /// The caller promises not to call methods on the returned
-        /// [`ByteSlice`] other than `ByteSlice` methods (for example, via
-        /// `Any::downcast_ref`).
-        ///
-        /// `as_byte_slice` promises to return a `ByteSlice` whose referent is
-        /// validly-aligned for `T` and has a valid size for `T`.
+        /// * methods: The caller promises not to call methods on the returned
+        ///   [`ByteSlice`] other than `ByteSlice` methods (for example, via
+        ///   `Any::downcast_ref`).
+        /// * postcondition: `as_byte_slice` promises to return a `ByteSlice` whose referent is
+        ///   validly-aligned for `T` and has a valid size for `T`.
         pub(crate) unsafe fn as_byte_slice(&self) -> &impl ByteSlice {
             // INVARIANTS: The caller promises not to call methods other than
             // those on `ByteSlice`. Since `B: ByteSlice`, dereference stability
@@ -110,12 +109,11 @@ mod def {
         ///
         /// # Safety
         ///
-        /// The caller promises not to call methods on the returned
-        /// [`ByteSliceMut`] other than `ByteSliceMut` methods (for example, via
-        /// `Any::downcast_mut`).
-        ///
-        /// `as_byte_slice` promises to return a `ByteSlice` whose referent is
-        /// validly-aligned for `T` and has a valid size for `T`.
+        /// * methods: The caller promises not to call methods on the returned
+        ///   [`ByteSliceMut`] other than `ByteSliceMut` methods (for example, via
+        ///   `Any::downcast_mut`).
+        /// * postcondition: `as_byte_slice` promises to return a `ByteSlice` whose referent is
+        ///   validly-aligned for `T` and has a valid size for `T`.
         pub(crate) unsafe fn as_byte_slice_mut(&mut self) -> &mut impl ByteSliceMut {
             // INVARIANTS: The caller promises not to call methods other than
             // those on `ByteSliceMut`. Since `B: ByteSlice`, dereference
@@ -133,12 +131,11 @@ mod def {
         ///
         /// # Safety
         ///
-        /// The caller promises not to call methods on the returned
-        /// [`IntoByteSlice`] other than `IntoByteSlice` methods (for example,
-        /// via `Any::downcast_ref`).
-        ///
-        /// `as_byte_slice` promises to return a `ByteSlice` whose referent is
-        /// validly-aligned for `T` and has a valid size for `T`.
+        /// * methods: The caller promises not to call methods on the returned
+        ///   [`IntoByteSlice`] other than `IntoByteSlice` methods (for example,
+        ///   via `Any::downcast_ref`).
+        /// * postcondition: `as_byte_slice` promises to return a `ByteSlice` whose referent is
+        ///   validly-aligned for `T` and has a valid size for `T`.
         pub(crate) unsafe fn into_byte_slice(self) -> impl IntoByteSlice<'a> {
             // INVARIANTS: The caller promises not to call methods other than
             // those on `IntoByteSlice`. Since `B: ByteSlice`, dereference
@@ -156,12 +153,11 @@ mod def {
         ///
         /// # Safety
         ///
-        /// The caller promises not to call methods on the returned
-        /// [`IntoByteSliceMut`] other than `IntoByteSliceMut` methods (for
-        /// example, via `Any::downcast_mut`).
-        ///
-        /// `as_byte_slice` promises to return a `ByteSlice` whose referent is
-        /// validly-aligned for `T` and has a valid size for `T`.
+        /// * methods: The caller promises not to call methods on the returned
+        ///   [`IntoByteSliceMut`] other than `IntoByteSliceMut` methods (for
+        ///   example, via `Any::downcast_mut`).
+        /// * postcondition: `as_byte_slice` promises to return a `ByteSlice` whose referent is
+        ///   validly-aligned for `T` and has a valid size for `T`.
         pub(crate) unsafe fn into_byte_slice_mut(self) -> impl IntoByteSliceMut<'a> {
             // INVARIANTS: The caller promises not to call methods other than
             // those on `IntoByteSliceMut`. Since `B: ByteSlice`, dereference

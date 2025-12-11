@@ -281,7 +281,7 @@ impl<T> Unalign<T> {
 
     /// Gets an unaligned mutable raw pointer to the inner `T`.
     ///
-    /// # Safety
+    /// # Safety Invariants
     ///
     /// The returned raw pointer is not necessarily aligned to
     /// `align_of::<T>()`. Most functions which operate on raw pointers require
@@ -295,7 +295,7 @@ impl<T> Unalign<T> {
     /// [`read_unaligned`]: core::ptr::read_unaligned
     // FIXME(https://github.com/rust-lang/rust/issues/57349): Make this `const`.
     #[inline(always)]
-    pub unsafe fn get_mut_ptr(&mut self) -> *mut T {
+    pub fn get_mut_ptr(&mut self) -> *mut T {
         ptr::addr_of_mut!(self.0)
     }
 

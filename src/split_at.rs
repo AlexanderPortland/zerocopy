@@ -71,8 +71,8 @@ pub unsafe trait SplitAt: KnownLayout<PointerMetadata = usize> {
     ///
     /// # Safety
     ///
-    /// The caller promises that `l_len` is not greater than the length of
-    /// `self`'s trailing slice.
+    /// * l_len: The caller promises that `l_len` is not greater than the length of
+    ///   `self`'s trailing slice.
     #[inline]
     #[must_use]
     unsafe fn split_at_unchecked(&self, l_len: usize) -> Split<&Self> {
@@ -134,8 +134,8 @@ pub unsafe trait SplitAt: KnownLayout<PointerMetadata = usize> {
     ///
     /// # Safety
     ///
-    /// The caller promises that `l_len` is not greater than the length of
-    /// `self`'s trailing slice.
+    /// * l_len: The caller promises that `l_len` is not greater than the length of
+    ///   `self`'s trailing slice.
     #[inline]
     #[must_use]
     unsafe fn split_at_mut_unchecked(&mut self, l_len: usize) -> Split<&mut Self> {
@@ -246,7 +246,7 @@ impl<T> Split<T> {
     ///
     /// # Safety
     ///
-    /// `l_len` is no greater than `source`'s length.
+    /// * l_len: `l_len` is no greater than `source`'s length.
     #[inline(always)]
     unsafe fn new(source: T, l_len: usize) -> Self {
         Self { source, l_len }
@@ -472,12 +472,12 @@ where
     ///
     /// # Safety
     ///
-    /// If `T` permits interior mutation, the trailing padding bytes of the left
-    /// portion must not overlap the right portion. For some dynamically sized
-    /// types, the padding that appears after the trailing slice field [is a
-    /// dynamic function of the trailing slice
-    /// length](KnownLayout#slice-dst-layout). Thus, for some types, this
-    /// condition is dependent on the length of the left portion.
+    /// * overlap: If `T` permits interior mutation, the trailing padding bytes of the left
+    ///   portion must not overlap the right portion. For some dynamically sized
+    ///   types, the padding that appears after the trailing slice field [is a
+    ///   dynamic function of the trailing slice
+    ///   length](KnownLayout#slice-dst-layout). Thus, for some types, this
+    ///   condition is dependent on the length of the left portion.
     #[must_use = "has no side effects"]
     #[inline(always)]
     pub unsafe fn via_unchecked(self) -> (&'a T, &'a [T::Elem]) {
@@ -662,11 +662,11 @@ where
     ///
     /// # Safety
     ///
-    /// The trailing padding bytes of the left portion must not overlap the
-    /// right portion. For some dynamically sized types, the padding that
-    /// appears after the trailing slice field [is a dynamic function of the
-    /// trailing slice length](KnownLayout#slice-dst-layout). Thus, for some
-    /// types, this condition is dependent on the length of the left portion.
+    /// * overlap: The trailing padding bytes of the left portion must not overlap the
+    ///   right portion. For some dynamically sized types, the padding that
+    ///   appears after the trailing slice field [is a dynamic function of the
+    ///   trailing slice length](KnownLayout#slice-dst-layout). Thus, for some
+    ///   types, this condition is dependent on the length of the left portion.
     #[must_use = "has no side effects"]
     #[inline(always)]
     pub unsafe fn via_unchecked(self) -> (&'a mut T, &'a mut [T::Elem]) {
@@ -778,8 +778,8 @@ where
     ///
     /// # Safety
     ///
-    /// The caller promises that if `I::Aliasing` is [`Exclusive`] or `T`
-    /// permits interior mutation, then `l_len.padding_needed_for() == 0`.
+    /// * padding: The caller promises that if `I::Aliasing` is [`Exclusive`] or `T`
+    ///   permits interior mutation, then `l_len.padding_needed_for() == 0`.
     #[inline(always)]
     unsafe fn via_unchecked(self) -> (Ptr<'a, T, I>, Ptr<'a, [T::Elem], I>) {
         let l_len = self.l_len();

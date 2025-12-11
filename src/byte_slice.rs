@@ -129,7 +129,7 @@ pub unsafe trait SplitByteSlice: ByteSlice {
     ///
     /// # Safety
     ///
-    /// `mid` must not be greater than `self.deref().len()`.
+    /// * mid: `mid` must not be greater than `self.deref().len()`.
     ///
     /// # Panics
     ///

@@ -244,7 +244,7 @@ pub(crate) const fn min(a: NonZeroUsize, b: NonZeroUsize) -> NonZeroUsize {
 ///
 /// # Safety
 ///
-/// The caller guarantees that `src.len() <= dst.len()`.
+/// * length: The caller guarantees that `src.len() <= dst.len()`.
 #[inline(always)]
 pub(crate) unsafe fn copy_unchecked(src: &[u8], dst: &mut [u8]) {
     debug_assert!(src.len() <= dst.len());
@@ -267,7 +267,7 @@ pub(crate) unsafe fn copy_unchecked(src: &[u8], dst: &mut [u8]) {
 ///
 /// # Safety
 ///
-/// The value `src` must be a valid instance of `Dst`.
+/// * validity: The value `src` must be a valid instance of `Dst`.
 #[inline(always)]
 pub(crate) const unsafe fn transmute_unchecked<Src, Dst>(src: Src) -> Dst {
     static_assert!(Src, Dst => core::mem::size_of::<Src>() == core::mem::size_of::<Dst>());
@@ -311,10 +311,11 @@ pub(crate) const unsafe fn transmute_unchecked<Src, Dst>(src: Src) -> Dst {
 ///
 /// # Safety
 ///
-/// `allocate` must be either `alloc::alloc::alloc` or
-/// `alloc::alloc::alloc_zeroed`. The referent of the box returned by `new_box`
-/// has the same bit-validity as the referent of the pointer returned by the
-/// given `allocate` and sufficient size to store `T` with `meta`.
+/// * allocate: `allocate` must be either `alloc::alloc::alloc` or
+///   `alloc::alloc::alloc_zeroed`.
+/// * bit_validity: The referent of the box returned by `new_box`
+///   has the same bit-validity as the referent of the pointer returned by the
+///   given `allocate` and sufficient size to store `T` with `meta`.
 #[must_use = "has no side effects (other than allocation)"]
 #[cfg(feature = "alloc")]
 #[inline]
@@ -472,8 +473,8 @@ mod len_of {
 
         /// # Safety
         ///
-        /// The size of an instance of `&T` with the given metadata is not
-        /// larger than `isize::MAX`.
+        /// * size: The size of an instance of `&T` with the given metadata is not
+        ///   larger than `isize::MAX`.
         pub(crate) unsafe fn new_unchecked(meta: T::PointerMetadata) -> Self {
             /// SAFETY: The caller has promised that the size of an instance of
             /// `&T` with the given metadata is not larger than `isize::MAX`.
@@ -646,21 +647,21 @@ pub(crate) mod polyfills {
         ///
         /// # Safety
         ///
-        /// The caller promises that the addition will not overflow.
+        /// * overflow: The caller promises that the addition will not overflow.
         unsafe fn unchecked_add(self, rhs: Self) -> Self;
 
         /// Subtract without checking for underflow.
         ///
         /// # Safety
         ///
-        /// The caller promises that the subtraction will not underflow.
+        /// * underflow: The caller promises that the subtraction will not underflow.
         unsafe fn unchecked_sub(self, rhs: Self) -> Self;
 
         /// Multiply without checking for overflow.
         ///
         /// # Safety
         ///
-        /// The caller promises that the multiplication will not overflow.
+        /// * overflow: The caller promises that the multiplication will not overflow.
         unsafe fn unchecked_mul(self, rhs: Self) -> Self;
     }
 
